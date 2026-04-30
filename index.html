@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NuPS Omatoimiharjoittelu</title>
+  <title>NuPS P17 omatoimiharjoittelu</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; min-height: 100vh; }
@@ -72,14 +72,18 @@
     .pw-wrap { text-align: center; padding: 2.5rem 0; }
     .pw-btn { padding: 8px 24px; font-size: 13px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; }
     .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1rem 0; }
+    .del-btn { font-size: 12px; padding: 3px 10px; border: 1px solid #e0b0b0; border-radius: 20px; background: #fff; color: #A32D2D; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .del-btn:hover { background: #FCEBEB; }
+    .confirm-bar { display: none; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px; color: #A32D2D; }
+    .confirm-yes { padding: 4px 12px; font-size: 12px; background: #A32D2D; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .confirm-no  { padding: 4px 12px; font-size: 12px; background: #f0f0f0; color: #444; border: none; border-radius: 6px; cursor: pointer; }
   </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div>
-      <h1>⚽ NuPS Omatoimiharjoittelu</h1>
-      <div class="sub">Pallonhallinta & haasteet</div>
+      <h1>⚽ NuPS P17 omatoimiharjoittelu</h1>
     </div>
   </header>
 
@@ -95,7 +99,15 @@
     <div id="err-player" class="err-box"></div>
     <div id="player-select-screen">
       <div class="section-title" style="margin-bottom:12px">Kuka harjoittelee tänään?</div>
-      <div id="player-list"><div class="loading">Yhdistetään tietokantaan...</div></div>
+      <select id="player-dropdown" style="margin-bottom:10px">
+        <option value="">– Valitse pelaaja –</option>
+      </select>
+      <button onclick="selectFromDropdown()" style="width:100%;padding:9px;font-size:13px;font-weight:500;background:#1D9E75;color:white;border:none;border-radius:8px;cursor:pointer;margin-bottom:1rem">Aloita harjoittelu</button>
+      <button onclick="toggleOverview()" style="width:100%;padding:9px;font-size:13px;font-weight:500;background:#fff;color:#1D9E75;border:1px solid #1D9E75;border-radius:8px;cursor:pointer">📊 Kaikkien tilanne</button>
+      <div id="overview-panel" style="display:none;margin-top:1rem">
+        <div class="section-title" style="margin-bottom:8px">Kaikkien tilanne</div>
+        <div id="overview-list"></div>
+      </div>
     </div>
     <div id="player-app" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f0f0f0">
@@ -146,6 +158,11 @@
         <button class="add-btn" onclick="addPlayer()">+ Lisää pelaaja</button>
       </div>
 
+      <div class="section-title">Harjoitteet</div>
+      <div class="card" style="margin-bottom:1.25rem">
+        <div id="coach-challenge-list"><div class="loading">Ladataan...</div></div>
+      </div>
+
       <div class="section-title">Lisää harjoite</div>
       <div class="card" style="margin-bottom:1.25rem">
         <label class="form-label">Nimi</label>
@@ -191,7 +208,7 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, serverTimestamp }
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -262,33 +279,60 @@ async function loadChallenges() {
 }
 
 function renderPlayerSelect() {
-  const el = document.getElementById('player-list');
-  if (players.length === 0) {
-    el.innerHTML='<div class="loading">Ei pelaajia vielä.<br><br>Siirry <b>Valmentaja</b>-välilehdelle ja lisää pelaajat.</div>';
-    return;
-  }
-  el.innerHTML='';
+  const dd = document.getElementById('player-dropdown');
+  dd.innerHTML = '<option value="">– Valitse pelaaja –</option>';
   players.forEach(p => {
-    const xp=p.xp||0, done=(p.done||[]).length, pct=Math.round(Math.min(xp,MAX_XP)/MAX_XP*100);
-    const btn=document.createElement('div');
-    btn.className='card clickable';
-    btn.style.cssText='display:flex;align-items:center;gap:12px;margin-bottom:8px';
-    btn.innerHTML=`
-      <div class="avatar">${initials(p.name)}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:15px;font-weight:600;color:#1a1a1a">${p.name}</div>
-        <div style="font-size:11px;color:#888;margin:2px 0">${getLevel(xp)} · ${xp} XP · ${done} suoritusta</div>
-        <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
-      </div>`;
-    btn.onclick=()=>selectPlayer(p.id);
-    el.appendChild(btn);
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    dd.appendChild(opt);
   });
 }
+
+function renderOverview() {
+  const el = document.getElementById('overview-list');
+  if (!players.length) { el.innerHTML = '<div class="loading">Ei pelaajia vielä.</div>'; return; }
+  el.innerHTML = '';
+  [...players].sort((a,b) => (b.xp||0) - (a.xp||0)).forEach(p => {
+    const xp = p.xp||0, done = (p.done||[]).length;
+    const pct = Math.round(Math.min(xp, MAX_XP) / MAX_XP * 100);
+    const row = document.createElement('div');
+    row.className = 'card';
+    row.style.marginBottom = '8px';
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="avatar">${initials(p.name)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600;color:#1a1a1a">${p.name}</div>
+          <div style="font-size:11px;color:#888;margin:2px 0">${getLevel(xp)} · ${xp} XP · ${done} suoritusta</div>
+          <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+        <span class="level-badge">${getLevel(xp)}</span>
+      </div>`;
+    el.appendChild(row);
+  });
+}
+
+window.toggleOverview = () => {
+  const panel = document.getElementById('overview-panel');
+  const visible = panel.style.display === 'none';
+  panel.style.display = visible ? 'block' : 'none';
+  if (visible) renderOverview();
+  document.querySelector('[onclick="toggleOverview()"]').textContent = visible ? '✕ Sulje tilanne' : '📊 Kaikkien tilanne';
+};
+
+window.selectFromDropdown = async () => {
+  const id = document.getElementById('player-dropdown').value;
+  if (!id) return;
+  await selectPlayer(id);
+};
 
 window.logOut = () => {
   currentPlayer=null;
   document.getElementById('player-select-screen').style.display='block';
   document.getElementById('player-app').style.display='none';
+  document.getElementById('overview-panel').style.display='none';
+  document.querySelector('[onclick="toggleOverview()"]').textContent='📊 Kaikkien tilanne';
   loadPlayers();
 };
 
@@ -396,9 +440,39 @@ async function loadCoach() {
             <div style="font-size:14px;font-weight:600;color:#1a1a1a">${p.name}</div>
             <div style="font-size:12px;color:#888">${(p.done||[]).length} suoritusta · ${xp} XP</div>
             <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
+            <div class="confirm-bar" id="confirm-p-${p.id}">
+              Poistetaanko pelaaja? <button class="confirm-yes" onclick="window.deletePlayer('${p.id}')">Poista</button><button class="confirm-no" onclick="window.hideConfirm('confirm-p-${p.id}')">Peruuta</button>
+            </div>
           </div>
-          <span class="level-badge">${getLevel(xp)}</span>`;
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <span class="level-badge">${getLevel(xp)}</span>
+            <button class="del-btn" onclick="window.showConfirm('confirm-p-${p.id}')">Poista</button>
+          </div>`;
         pl.appendChild(row);
+      });
+    }
+
+    // Harjoitelista poistopainikkeineen
+    const cl=document.getElementById('coach-challenge-list'); cl.innerHTML='';
+    if(!challenges.length){cl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei harjoitteita vielä.</div>';}
+    else {
+      challenges.forEach(ch=>{
+        const cat=CATS[ch.cat]||CATS.muu;
+        const row=document.createElement('div');
+        row.style.cssText='padding:8px 0;border-bottom:1px solid #f0f0f0;';
+        row.innerHTML=`
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;min-width:0">
+              <span class="cat-pill ${cat.cls}">${cat.label}</span>
+              <span style="font-size:13px;font-weight:500;color:#1a1a1a;margin-left:4px">${ch.title}</span>
+              <span style="font-size:11px;color:#888;margin-left:6px">+${ch.xp||10} XP</span>
+            </div>
+            <button class="del-btn" onclick="window.showConfirm('confirm-ch-${ch.id}')">Poista</button>
+          </div>
+          <div class="confirm-bar" id="confirm-ch-${ch.id}">
+            Poistetaanko harjoite? <button class="confirm-yes" onclick="window.deleteChallenge('${ch.id}')">Poista</button><button class="confirm-no" onclick="window.hideConfirm('confirm-ch-${ch.id}')">Peruuta</button>
+          </div>`;
+        cl.appendChild(row);
       });
     }
     await loadHistory();
@@ -451,6 +525,29 @@ window.addChallenge = async () => {
     showOk('ok-coach','✓ Harjoite lisätty!');
     await loadCoach();
   } catch(e){ showErr('err-coach','Lisäys epäonnistui: '+e.message); }
+};
+
+window.showConfirm = (id) => { const el=document.getElementById(id); if(el) el.style.display='flex'; };
+window.hideConfirm = (id) => { const el=document.getElementById(id); if(el) el.style.display='none'; };
+
+window.deletePlayer = async (id) => {
+  try {
+    // Poista historia-alikokoelma
+    const hSnap=await getDocs(collection(db,'players',id,'history'));
+    await Promise.all(hSnap.docs.map(d=>deleteDoc(d.ref)));
+    // Poista pelaaja
+    await deleteDoc(doc(db,'players',id));
+    showOk('ok-coach','✓ Pelaaja poistettu.');
+    await loadCoach();
+  } catch(e){ showErr('err-coach','Poisto epäonnistui: '+e.message); }
+};
+
+window.deleteChallenge = async (id) => {
+  try {
+    await deleteDoc(doc(db,'challenges',id));
+    showOk('ok-coach','✓ Harjoite poistettu.');
+    await loadCoach();
+  } catch(e){ showErr('err-coach','Poisto epäonnistui: '+e.message); }
 };
 
 await loadPlayers();
