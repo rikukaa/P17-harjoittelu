@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NuPS Omatoimiharjoittelu</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; min-height: 100vh; }
+    .app { max-width: 520px; margin: 0 auto; padding: 1rem; }
+    header { display: flex; align-items: center; gap: 10px; padding: 1rem 0 1.25rem; border-bottom: 1px solid #e0e0e0; margin-bottom: 1.25rem; }
+    header img { width: 36px; height: 36px; }
+    header h1 { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+    header .sub { font-size: 12px; color: #888; }
+    .conn-status { font-size: 11px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 1rem; }
+    .conn-ok { background: #E1F5EE; color: #085041; }
+    .conn-err { background: #FCEBEB; color: #A32D2D; }
+    .conn-wait { background: #f0f0f0; color: #888; }
+    .tab-bar { display: flex; gap: 6px; margin-bottom: 1.25rem; border-bottom: 1px solid #e0e0e0; }
+    .tab { font-size: 13px; font-weight: 500; padding: 6px 14px; border: none; background: transparent; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab.active { color: #1D9E75; border-bottom-color: #1D9E75; }
+    .section { display: none; } .section.active { display: block; }
+    .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; }
+    .card.done { border-color: #1D9E75; background: #E1F5EE; }
+    .card.locked { opacity: 0.45; }
+    .card.clickable { cursor: pointer; transition: box-shadow 0.15s; }
+    .card.clickable:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .cat-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; display: inline-block; margin-bottom: 4px; }
+    .cat-pomputtelu { background: #E1F5EE; color: #085041; }
+    .cat-syotto { background: #E6F1FB; color: #0C447C; }
+    .cat-kuljetus { background: #FAEEDA; color: #633806; }
+    .cat-muu { background: #F1EFE8; color: #444; }
+    .xp-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #E1F5EE; color: #085041; font-weight: 500; white-space: nowrap; }
+    .xp-pill.locked { background: #f0f0f0; color: #888; }
+    .ch-title { font-size: 15px; font-weight: 500; color: #1a1a1a; margin: 2px 0; }
+    .ch-title.done { color: #0F6E56; }
+    .ch-desc { font-size: 13px; color: #666; }
+    .ch-desc.done { color: #0F6E56; }
+    .vid-link { font-size: 12px; color: #185FA5; display: inline-block; margin-top: 5px; }
+    .mark-btn { margin-top: 10px; width: 100%; padding: 9px; font-size: 13px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .mark-btn:hover { background: #0F6E56; }
+    .xp-bar-bg { height: 6px; background: #eee; border-radius: 6px; overflow: hidden; margin: 6px 0; }
+    .xp-bar-fill { height: 100%; background: #1D9E75; border-radius: 6px; transition: width 0.4s; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .stat-box { background: #f7f7f7; border-radius: 10px; padding: 10px 12px; }
+    .stat-label { font-size: 11px; color: #888; margin-bottom: 3px; }
+    .stat-val { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+    .player-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .player-row:last-child { border-bottom: none; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: #E1F5EE; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #085041; flex-shrink: 0; }
+    .level-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #E6F1FB; color: #0C447C; font-weight: 500; white-space: nowrap; }
+    .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .filter-btn { font-size: 12px; padding: 4px 10px; border: 1px solid #ddd; border-radius: 20px; background: transparent; cursor: pointer; color: #666; }
+    .filter-btn.active { background: #1D9E75; color: white; border-color: #1D9E75; }
+    select, input[type=text], input[type=password], textarea {
+      width: 100%; margin-bottom: 8px; font-size: 13px; padding: 8px 10px;
+      border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a;
+      font-family: inherit;
+    }
+    textarea { height: 60px; resize: vertical; }
+    .form-label { font-size: 12px; color: #666; margin-bottom: 3px; display: block; }
+    .add-btn { width: 100%; padding: 9px; font-size: 13px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 4px; }
+    .add-btn:hover { background: #0F6E56; }
+    .section-title { font-size: 12px; font-weight: 600; color: #888; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
+    .check-circle { width: 20px; height: 20px; background: #1D9E75; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .history-row { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; color: #666; display: flex; justify-content: space-between; gap: 8px; }
+    .history-row:last-child { border-bottom: none; }
+    .toast { background: #1D9E75; color: white; font-size: 14px; padding: 10px 20px; border-radius: 24px; text-align: center; position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.15); white-space: nowrap; }
+    .loading { text-align: center; padding: 1.5rem; font-size: 13px; color: #888; }
+    .err-box { background: #FCEBEB; color: #A32D2D; border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
+    .ok-box { background: #E1F5EE; color: #085041; border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
+    .pw-wrap { text-align: center; padding: 2.5rem 0; }
+    .pw-btn { padding: 8px 24px; font-size: 13px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>⚽ NuPS Omatoimiharjoittelu</h1>
+      <div class="sub">Pallonhallinta & haasteet</div>
+    </div>
+  </header>
+
+  <span class="conn-status conn-wait" id="conn-status">⏳ Yhdistetään...</span>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('player')">Pelaaja</button>
+    <button class="tab" onclick="showTab('coach')">Valmentaja</button>
+  </div>
+
+  <!-- PELAAJA -->
+  <div id="sec-player" class="section active">
+    <div id="err-player" class="err-box"></div>
+    <div id="player-select-screen">
+      <div class="section-title" style="margin-bottom:12px">Kuka harjoittelee tänään?</div>
+      <div id="player-list"><div class="loading">Yhdistetään tietokantaan...</div></div>
+    </div>
+    <div id="player-app" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f0f0f0">
+        <div id="p-avatar" class="avatar"></div>
+        <div style="flex:1">
+          <div id="p-name" style="font-size:16px;font-weight:600;color:#1a1a1a"></div>
+          <div id="p-level" style="font-size:12px;color:#888"></div>
+        </div>
+        <button onclick="logOut()" style="font-size:12px;padding:4px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;cursor:pointer;color:#666">Vaihda</button>
+      </div>
+      <div style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
+          <span id="p-xp-label"></span><span id="p-pct"></span>
+        </div>
+        <div class="xp-bar-bg"><div class="xp-bar-fill" id="p-xp-fill" style="width:0%"></div></div>
+      </div>
+      <div class="filter-bar" id="cat-filters"></div>
+      <div id="challenge-list"></div>
+    </div>
+  </div>
+
+  <!-- VALMENTAJA -->
+  <div id="sec-coach" class="section">
+    <div id="coach-gate">
+      <div class="pw-wrap">
+        <div style="font-size:15px;font-weight:500;margin-bottom:4px">Valmentajan alue</div>
+        <div style="font-size:13px;color:#888;margin-bottom:16px">Syötä valmentajan koodi</div>
+        <input type="password" id="pw-field" style="width:140px;text-align:center;margin-bottom:12px" placeholder="••••" />
+        <br><button class="pw-btn" onclick="checkPw()">Kirjaudu</button>
+      </div>
+    </div>
+    <div id="coach-panel" style="display:none">
+      <div id="err-coach" class="err-box"></div>
+      <div id="ok-coach" class="ok-box"></div>
+
+      <div class="section-title">Yhteenveto</div>
+      <div class="stat-grid" id="coach-stats"></div>
+
+      <div class="section-title">Pelaajat</div>
+      <div class="card" style="margin-bottom:1.25rem">
+        <div id="coach-player-list"><div class="loading">Ladataan...</div></div>
+      </div>
+
+      <div class="section-title">Lisää pelaaja</div>
+      <div class="card" style="margin-bottom:1.25rem">
+        <label class="form-label">Pelaajan nimi</label>
+        <input type="text" id="new-player-name" placeholder="esim. Mikael Korhonen" />
+        <button class="add-btn" onclick="addPlayer()">+ Lisää pelaaja</button>
+      </div>
+
+      <div class="section-title">Lisää harjoite</div>
+      <div class="card" style="margin-bottom:1.25rem">
+        <label class="form-label">Nimi</label>
+        <input type="text" id="new-title" placeholder="esim. Pomputtele 30 kertaa" />
+        <label class="form-label">Kuvaus</label>
+        <textarea id="new-desc" placeholder="Mitä tehdään..."></textarea>
+        <label class="form-label">Kategoria</label>
+        <select id="new-cat">
+          <option value="pomputtelu">Pomputtelu</option>
+          <option value="syotto">Syöttö</option>
+          <option value="kuljetus">Kuljetus</option>
+          <option value="muu">Muu</option>
+        </select>
+        <label class="form-label">XP-pisteet</label>
+        <select id="new-xp">
+          <option value="5">5 XP – helppo</option>
+          <option value="10" selected>10 XP – normaali</option>
+          <option value="15">15 XP – vaativa</option>
+          <option value="20">20 XP – haaste</option>
+        </select>
+        <label class="form-label">YouTube-linkki (valinnainen)</label>
+        <input type="text" id="new-video" placeholder="https://youtube.com/..." />
+        <label class="form-label">Avautuu kun pelaajalla on XP</label>
+        <select id="new-unlock">
+          <option value="0">Heti auki kaikille</option>
+          <option value="10">10 XP ansaittu</option>
+          <option value="20">20 XP ansaittu</option>
+          <option value="30">30 XP ansaittu</option>
+          <option value="50">50 XP ansaittu</option>
+        </select>
+        <button class="add-btn" onclick="addChallenge()">+ Lisää harjoite</button>
+      </div>
+
+      <div class="section-title">Suoritushistoria</div>
+      <div class="card">
+        <div id="history-list"><div class="loading">Ladataan...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCX8Olqf0fszDCeVAgrBifVsjRwBFR4sFE",
+  authDomain: "p17-haasteet.firebaseapp.com",
+  projectId: "p17-haasteet",
+  storageBucket: "p17-haasteet.firebasestorage.app",
+  messagingSenderId: "719754996458",
+  appId: "1:719754996458:web:ca12d19ac8785352bb0593"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+const COACH_PW = '1234';
+const MAX_XP = 60;
+const CATS = {
+  pomputtelu: { label: 'Pomputtelu', cls: 'cat-pomputtelu' },
+  syotto:     { label: 'Syöttö',     cls: 'cat-syotto' },
+  kuljetus:   { label: 'Kuljetus',   cls: 'cat-kuljetus' },
+  muu:        { label: 'Muu',        cls: 'cat-muu' }
+};
+
+let players = [];
+let challenges = [];
+let currentPlayer = null;
+let catFilter = 'kaikki';
+
+function setStatus(state, msg) {
+  const el = document.getElementById('conn-status');
+  el.textContent = msg;
+  el.className = 'conn-status ' + ({ ok:'conn-ok', err:'conn-err', wait:'conn-wait' }[state] || 'conn-wait');
+}
+function getLevel(xp) {
+  if (xp >= 50) return 'Mestari';
+  if (xp >= 30) return 'Taitava';
+  if (xp >= 10) return 'Harjoittelija';
+  return 'Aloittelija';
+}
+function initials(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',6000); }
+function showOk(id, msg)  { const el=document.getElementById(id); if(!el)return; el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+
+window.showTab = (t) => {
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['player','coach'][i]===t));
+  document.getElementById('sec-player').classList.toggle('active', t==='player');
+  document.getElementById('sec-coach').classList.toggle('active',  t==='coach');
+};
+
+async function loadPlayers() {
+  try {
+    const snap = await getDocs(collection(db,'players'));
+    players = snap.docs.map(d=>({id:d.id,...d.data()}));
+    setStatus('ok','✓ Yhdistetty Firebase-tietokantaan');
+    renderPlayerSelect();
+  } catch(e) {
+    setStatus('err','✗ Yhteys epäonnistui');
+    showErr('err-player','Firebase-yhteys epäonnistui: '+e.message);
+    document.getElementById('player-list').innerHTML='<div class="loading" style="color:#A32D2D">Yhteys epäonnistui.</div>';
+  }
+}
+
+async function loadChallenges() {
+  const snap = await getDocs(collection(db,'challenges'));
+  challenges = snap.docs.map(d=>({id:d.id,...d.data()}));
+  challenges.sort((a,b)=>(a.unlockAt||0)-(b.unlockAt||0));
+}
+
+function renderPlayerSelect() {
+  const el = document.getElementById('player-list');
+  if (players.length === 0) {
+    el.innerHTML='<div class="loading">Ei pelaajia vielä.<br><br>Siirry <b>Valmentaja</b>-välilehdelle ja lisää pelaajat.</div>';
+    return;
+  }
+  el.innerHTML='';
+  players.forEach(p => {
+    const xp=p.xp||0, done=(p.done||[]).length, pct=Math.round(Math.min(xp,MAX_XP)/MAX_XP*100);
+    const btn=document.createElement('div');
+    btn.className='card clickable';
+    btn.style.cssText='display:flex;align-items:center;gap:12px;margin-bottom:8px';
+    btn.innerHTML=`
+      <div class="avatar">${initials(p.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:600;color:#1a1a1a">${p.name}</div>
+        <div style="font-size:11px;color:#888;margin:2px 0">${getLevel(xp)} · ${xp} XP · ${done} suoritusta</div>
+        <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    btn.onclick=()=>selectPlayer(p.id);
+    el.appendChild(btn);
+  });
+}
+
+window.logOut = () => {
+  currentPlayer=null;
+  document.getElementById('player-select-screen').style.display='block';
+  document.getElementById('player-app').style.display='none';
+  loadPlayers();
+};
+
+async function selectPlayer(id) {
+  currentPlayer=id; catFilter='kaikki';
+  await loadChallenges();
+  document.getElementById('player-select-screen').style.display='none';
+  document.getElementById('player-app').style.display='block';
+  renderPlayerApp();
+}
+
+function renderPlayerApp() {
+  const p=players.find(x=>x.id===currentPlayer); if(!p) return;
+  const xp=p.xp||0, done=p.done||[], pct=Math.round(Math.min(xp,MAX_XP)/MAX_XP*100);
+  document.getElementById('p-avatar').textContent=initials(p.name);
+  document.getElementById('p-name').textContent=p.name;
+  document.getElementById('p-level').textContent=getLevel(xp)+' · '+xp+' XP';
+  document.getElementById('p-xp-label').textContent=xp+' / '+MAX_XP+' XP';
+  document.getElementById('p-pct').textContent=pct+'%';
+  document.getElementById('p-xp-fill').style.width=pct+'%';
+
+  const fb=document.getElementById('cat-filters'); fb.innerHTML='';
+  ['kaikki',...Object.keys(CATS)].forEach(k=>{
+    const b=document.createElement('button');
+    b.className='filter-btn'+(catFilter===k?' active':'');
+    b.textContent=k==='kaikki'?'Kaikki':CATS[k].label;
+    b.onclick=()=>{catFilter=k;renderPlayerApp();};
+    fb.appendChild(b);
+  });
+
+  const cl=document.getElementById('challenge-list'); cl.innerHTML='';
+  const visible=catFilter==='kaikki'?challenges:challenges.filter(c=>c.cat===catFilter);
+  if(visible.length===0){cl.innerHTML='<div class="loading">Ei harjoitteita vielä. Valmentaja lisää niitä.</div>';return;}
+
+  visible.forEach(ch=>{
+    const isDone=done.includes(ch.id), isLocked=(xp<(ch.unlockAt||0))&&!isDone;
+    const cat=CATS[ch.cat]||CATS.muu;
+    const card=document.createElement('div');
+    card.className='card'+(isDone?' done':'')+(isLocked?' locked':'');
+    const checkHtml=isDone?`<div class="check-circle"><svg width="11" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`:'';
+    const vidHtml=ch.video&&!isLocked?`<a class="vid-link" href="${ch.video}" target="_blank">▶ Videoesimerkki</a>`:'';
+    const lockHtml=isLocked?`<span style="font-size:18px">🔒</span>`:'';
+    const btnHtml=!isDone&&!isLocked?`<button class="mark-btn" onclick="window.markDone('${ch.id}',${ch.xp||10})">✓ Merkitse suoritetuksi</button>`:'';
+    card.innerHTML=`
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <span class="cat-pill ${cat.cls}">${cat.label}</span>
+          <div class="ch-title${isDone?' done':''}">${ch.title}</div>
+          <div class="ch-desc${isDone?' done':''}">${ch.desc||''}</div>
+          ${vidHtml}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="xp-pill${isLocked?' locked':''}">+${ch.xp||10} XP</span>
+          ${checkHtml}${lockHtml}
+        </div>
+      </div>${btnHtml}`;
+    cl.appendChild(card);
+  });
+}
+
+window.markDone = async (chId, xpAmt) => {
+  const p=players.find(x=>x.id===currentPlayer);
+  if(!p||(p.done||[]).includes(chId)) return;
+  const newXp=(p.xp||0)+xpAmt, newDone=[...(p.done||[]),chId];
+  const ch=challenges.find(c=>c.id===chId);
+  try {
+    await updateDoc(doc(db,'players',currentPlayer),{xp:newXp,done:newDone});
+    await addDoc(collection(db,'players',currentPlayer,'history'),{
+      chId, chTitle:ch?ch.title:'', date:new Date().toISOString().split('T')[0], ts:serverTimestamp()
+    });
+    p.xp=newXp; p.done=newDone;
+    showToast('🎉 +'+xpAmt+' XP – hienoa!');
+    renderPlayerApp();
+  } catch(e){ showErr('err-player','Tallennus epäonnistui: '+e.message); }
+};
+
+window.checkPw = () => {
+  if(document.getElementById('pw-field').value===COACH_PW){
+    document.getElementById('coach-gate').style.display='none';
+    document.getElementById('coach-panel').style.display='block';
+    loadCoach();
+  } else { document.getElementById('pw-field').value=''; document.getElementById('pw-field').placeholder='Väärä koodi!'; }
+};
+
+async function loadCoach() {
+  try {
+    const [pSnap,cSnap]=await Promise.all([getDocs(collection(db,'players')),getDocs(collection(db,'challenges'))]);
+    players=pSnap.docs.map(d=>({id:d.id,...d.data()}));
+    challenges=cSnap.docs.map(d=>({id:d.id,...d.data()}));
+    challenges.sort((a,b)=>(a.unlockAt||0)-(b.unlockAt||0));
+    const total=players.reduce((s,p)=>s+(p.done||[]).length,0);
+    document.getElementById('coach-stats').innerHTML=`
+      <div class="stat-box"><div class="stat-label">Pelaajia</div><div class="stat-val">${players.length}</div></div>
+      <div class="stat-box"><div class="stat-label">Suorituksia yht.</div><div class="stat-val">${total}</div></div>
+      <div class="stat-box"><div class="stat-label">Harjoitteita</div><div class="stat-val">${challenges.length}</div></div>`;
+    const pl=document.getElementById('coach-player-list'); pl.innerHTML='';
+    if(!players.length){pl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei pelaajia vielä.</div>';}
+    else {
+      [...players].sort((a,b)=>(b.xp||0)-(a.xp||0)).forEach(p=>{
+        const xp=p.xp||0, pct=Math.round(Math.min(xp,MAX_XP)/MAX_XP*100);
+        const row=document.createElement('div'); row.className='player-row';
+        row.innerHTML=`
+          <div class="avatar">${initials(p.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600;color:#1a1a1a">${p.name}</div>
+            <div style="font-size:12px;color:#888">${(p.done||[]).length} suoritusta · ${xp} XP</div>
+            <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
+          </div>
+          <span class="level-badge">${getLevel(xp)}</span>`;
+        pl.appendChild(row);
+      });
+    }
+    await loadHistory();
+  } catch(e){ showErr('err-coach','Lataus epäonnistui: '+e.message); }
+}
+
+async function loadHistory() {
+  const hl=document.getElementById('history-list'); hl.innerHTML='';
+  try {
+    const all=[];
+    for(const p of players){
+      const hSnap=await getDocs(collection(db,'players',p.id,'history'));
+      hSnap.docs.forEach(d=>all.push({playerName:p.name,...d.data()}));
+    }
+    all.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    if(!all.length){hl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei vielä suorituksia.</div>';return;}
+    all.forEach(h=>{
+      const row=document.createElement('div'); row.className='history-row';
+      row.innerHTML=`<span><span style="font-weight:600;color:#1a1a1a">${h.playerName}</span> – ${h.chTitle||'Harjoite'}</span><span>${h.date||''}</span>`;
+      hl.appendChild(row);
+    });
+  } catch(e){ hl.innerHTML='<div style="font-size:13px;color:#A32D2D">Virhe: '+e.message+'</div>'; }
+}
+
+window.addPlayer = async () => {
+  const name=document.getElementById('new-player-name').value.trim(); if(!name) return;
+  try {
+    await addDoc(collection(db,'players'),{name,xp:0,done:[],createdAt:serverTimestamp()});
+    document.getElementById('new-player-name').value='';
+    showOk('ok-coach','✓ Pelaaja "'+name+'" lisätty!');
+    await loadCoach();
+  } catch(e){ showErr('err-coach','Lisäys epäonnistui: '+e.message); }
+};
+
+window.addChallenge = async () => {
+  const title=document.getElementById('new-title').value.trim(); if(!title){document.getElementById('new-title').focus();return;}
+  try {
+    await addDoc(collection(db,'challenges'),{
+      title,
+      desc:document.getElementById('new-desc').value.trim()||'',
+      cat:document.getElementById('new-cat').value,
+      xp:parseInt(document.getElementById('new-xp').value),
+      video:document.getElementById('new-video').value.trim()||null,
+      unlockAt:parseInt(document.getElementById('new-unlock').value),
+      createdAt:serverTimestamp()
+    });
+    document.getElementById('new-title').value='';
+    document.getElementById('new-desc').value='';
+    document.getElementById('new-video').value='';
+    showOk('ok-coach','✓ Harjoite lisätty!');
+    await loadCoach();
+  } catch(e){ showErr('err-coach','Lisäys epäonnistui: '+e.message); }
+};
+
+await loadPlayers();
+await loadChallenges();
+</script>
+</body>
+</html>
