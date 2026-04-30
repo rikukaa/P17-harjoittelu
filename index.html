@@ -197,8 +197,27 @@
       </div>
 
       <div class="section-title">Suoritushistoria</div>
-      <div class="card">
+      <div class="card" style="margin-bottom:1.25rem">
         <div id="history-list"><div class="loading">Ladataan...</div></div>
+      </div>
+
+      <div class="section-title">Kauden vaihto</div>
+      <div class="card" style="border-color:#e0b0b0">
+        <div style="font-size:13px;color:#444;margin-bottom:10px">Arkistoi nykyisen kauden tulokset ja nollaa pelaajien suoritukset. Pelaajien nimet ja haasteet säilyvät.</div>
+        <label class="form-label">Kauden nimi (tallentuu arkistoon)</label>
+        <input type="text" id="season-name" placeholder="esim. Kausi 1 – toukokuu 2025" />
+        <div id="season-confirm" style="display:none;margin-top:4px">
+          <div style="font-size:13px;color:#A32D2D;margin-bottom:8px;font-weight:500">⚠️ Tämä nollaa kaikkien pelaajien XP:n ja suoritukset. Varmista että kauden nimi on oikein.</div>
+          <div style="display:flex;gap:8px">
+            <button class="confirm-yes" style="flex:1" onclick="window.doSeasonReset()">Kyllä, aloita uusi kausi</button>
+            <button class="confirm-no" style="flex:1" onclick="document.getElementById('season-confirm').style.display='none'">Peruuta</button>
+          </div>
+        </div>
+        <button onclick="window.showSeasonConfirm()" class="add-btn" style="background:#A32D2D;margin-top:4px" id="season-btn">Aloita uusi kausi</button>
+        <div style="margin-top:1rem">
+          <div class="section-title" style="margin-bottom:6px">Aiemmat kaudet</div>
+          <div id="season-archive"><div style="font-size:13px;color:#888">Ladataan...</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -224,7 +243,6 @@ const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 
 const COACH_PW = '1234';
-const MAX_XP = 60;
 const CATS = {
   pomputtelu: { label: 'Pomputtelu', cls: 'cat-pomputtelu' },
   syotto:     { label: 'Syöttö',     cls: 'cat-syotto' },
@@ -237,15 +255,14 @@ let challenges = [];
 let currentPlayer = null;
 let catFilter = 'kaikki';
 
-function setStatus(state, msg) {
-  const el = document.getElementById('conn-status');
-  el.textContent = msg;
-  el.className = 'conn-status ' + ({ ok:'conn-ok', err:'conn-err', wait:'conn-wait' }[state] || 'conn-wait');
-}
+function totalXP() { return challenges.reduce((s,c) => s + (c.xp||0), 0) || 1; }
+
 function getLevel(xp) {
-  if (xp >= 50) return 'Mestari';
-  if (xp >= 30) return 'Taitava';
-  if (xp >= 10) return 'Harjoittelija';
+  const pct = Math.round(xp / totalXP() * 100);
+  if (pct >= 100) return 'Mestari 🏆';
+  if (pct >= 75)  return 'Edistynyt';
+  if (pct >= 50)  return 'Taitava';
+  if (pct >= 25)  return 'Harjoittelija';
   return 'Aloittelija';
 }
 function initials(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
@@ -295,7 +312,7 @@ function renderOverview() {
   el.innerHTML = '';
   [...players].sort((a,b) => (b.xp||0) - (a.xp||0)).forEach(p => {
     const xp = p.xp||0, done = (p.done||[]).length;
-    const pct = Math.round(Math.min(xp, MAX_XP) / MAX_XP * 100);
+    const pct = Math.round(Math.min(xp, totalXP()) / totalXP() * 100);
     const row = document.createElement('div');
     row.className = 'card';
     row.style.marginBottom = '8px';
@@ -346,11 +363,11 @@ async function selectPlayer(id) {
 
 function renderPlayerApp() {
   const p=players.find(x=>x.id===currentPlayer); if(!p) return;
-  const xp=p.xp||0, done=p.done||[], pct=Math.round(Math.min(xp,MAX_XP)/MAX_XP*100);
+  const xp=p.xp||0, done=p.done||[], pct=Math.round(Math.min(xp,totalXP())/totalXP()*100);
   document.getElementById('p-avatar').textContent=initials(p.name);
   document.getElementById('p-name').textContent=p.name;
-  document.getElementById('p-level').textContent=getLevel(xp)+' · '+xp+' XP';
-  document.getElementById('p-xp-label').textContent=xp+' / '+MAX_XP+' XP';
+  document.getElementById('p-level').textContent=getLevel(xp)+' · '+xp+' / '+totalXP()+' XP';
+  document.getElementById('p-xp-label').textContent=xp+' / '+totalXP()+' XP';
   document.getElementById('p-pct').textContent=pct+'%';
   document.getElementById('p-xp-fill').style.width=pct+'%';
 
@@ -432,7 +449,7 @@ async function loadCoach() {
     if(!players.length){pl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei pelaajia vielä.</div>';}
     else {
       [...players].sort((a,b)=>(b.xp||0)-(a.xp||0)).forEach(p=>{
-        const xp=p.xp||0, pct=Math.round(Math.min(xp,MAX_XP)/MAX_XP*100);
+        const xp=p.xp||0, pct=Math.round(Math.min(xp,totalXP())/totalXP()*100);
         const row=document.createElement('div'); row.className='player-row';
         row.innerHTML=`
           <div class="avatar">${initials(p.name)}</div>
@@ -476,6 +493,7 @@ async function loadCoach() {
       });
     }
     await loadHistory();
+    await loadSeasonArchive();
   } catch(e){ showErr('err-coach','Lataus epäonnistui: '+e.message); }
 }
 
@@ -549,6 +567,70 @@ window.deleteChallenge = async (id) => {
     await loadCoach();
   } catch(e){ showErr('err-coach','Poisto epäonnistui: '+e.message); }
 };
+
+window.showSeasonConfirm = () => {
+  const name = document.getElementById('season-name').value.trim();
+  if (!name) { document.getElementById('season-name').focus(); return; }
+  document.getElementById('season-confirm').style.display = 'block';
+  document.getElementById('season-btn').style.display = 'none';
+};
+
+window.doSeasonReset = async () => {
+  const name = document.getElementById('season-name').value.trim();
+  if (!name) return;
+  try {
+    const date = new Date().toISOString().split('T')[0];
+    // Arkistoi jokaisen pelaajan XP ja nollaa
+    for (const p of players) {
+      await addDoc(collection(db,'players',p.id,'kaudet'), {
+        nimi: name, xp: p.xp||0, suorituksia: (p.done||[]).length, date, ts: serverTimestamp()
+      });
+      // Poista historia
+      const hSnap = await getDocs(collection(db,'players',p.id,'history'));
+      await Promise.all(hSnap.docs.map(d=>deleteDoc(d.ref)));
+      // Nollaa XP ja suoritukset
+      await updateDoc(doc(db,'players',p.id), { xp:0, done:[] });
+    }
+    document.getElementById('season-name').value = '';
+    document.getElementById('season-confirm').style.display = 'none';
+    document.getElementById('season-btn').style.display = 'block';
+    showOk('ok-coach', '✓ Kausi "'+name+'" arkistoitu ja suoritukset nollattu!');
+    await loadCoach();
+  } catch(e){ showErr('err-coach','Kauden vaihto epäonnistui: '+e.message); }
+};
+
+async function loadSeasonArchive() {
+  const el = document.getElementById('season-archive');
+  try {
+    // Kerää kaikkien pelaajien kaudet
+    const kaudetMap = {}; // kaudenNimi -> [{name, xp}]
+    for (const p of players) {
+      const snap = await getDocs(collection(db,'players',p.id,'kaudet'));
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (!kaudetMap[data.nimi]) kaudetMap[data.nimi] = { date: data.date||'', pelaajat:[] };
+        kaudetMap[data.nimi].pelaajat.push({ name:p.name, xp:data.xp||0, suorituksia:data.suorituksia||0 });
+      });
+    }
+    const kaudet = Object.entries(kaudetMap).sort((a,b)=>b[1].date.localeCompare(a[1].date));
+    if (!kaudet.length) { el.innerHTML='<div style="font-size:13px;color:#888">Ei arkistoituja kausia vielä.</div>'; return; }
+    el.innerHTML = '';
+    kaudet.forEach(([nimi, data]) => {
+      const block = document.createElement('div');
+      block.style.cssText = 'margin-bottom:10px;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden';
+      const sorted = [...data.pelaajat].sort((a,b)=>b.xp-a.xp);
+      const rows = sorted.map(p=>`
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 12px;border-top:1px solid #f0f0f0;color:#444">
+          <span>${p.name}</span>
+          <span style="font-weight:500;color:#1a1a1a">${p.xp} XP · ${p.suorituksia} suoritusta</span>
+        </div>`).join('');
+      block.innerHTML = `
+        <div style="background:#f7f7f7;padding:8px 12px;font-size:12px;font-weight:600;color:#444">${nimi} <span style="font-weight:400;color:#888">· ${data.date}</span></div>
+        ${rows}`;
+      el.appendChild(block);
+    });
+  } catch(e){ el.innerHTML='<div style="font-size:13px;color:#A32D2D">Virhe: '+e.message+'</div>'; }
+}
 
 await loadPlayers();
 await loadChallenges();
