@@ -665,6 +665,8 @@ window.clearAllHistory = async () => {
     await loadCoach();
   } catch(e){ showErr('err-coach','Tyhjennys epäonnistui: '+e.message); }
 };
+
+window.showSeasonConfirm = () => {
   const name = document.getElementById('season-name').value.trim();
   if (!name) { document.getElementById('season-name').focus(); return; }
   document.getElementById('season-confirm').style.display = 'block';
