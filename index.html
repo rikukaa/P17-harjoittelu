@@ -28,7 +28,8 @@
     .cat-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; display: inline-block; margin-bottom: 4px; }
     .cat-pomputtelu { background: #E1F5EE; color: #085041; }
     .cat-syotto { background: #E6F1FB; color: #0C447C; }
-    .cat-kuljetus { background: #FAEEDA; color: #633806; }
+    .cat-pallonkasittely { background: #FAEEDA; color: #633806; }
+    .cat-harhautukset { background: #F3E8FB; color: #5C0F8B; }
     .cat-muu { background: #F1EFE8; color: #444; }
     .xp-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #E1F5EE; color: #085041; font-weight: 500; white-space: nowrap; }
     .xp-pill.locked { background: #f0f0f0; color: #888; }
@@ -173,7 +174,8 @@
         <select id="new-cat">
           <option value="pomputtelu">Pomputtelu</option>
           <option value="syotto">Syöttö</option>
-          <option value="kuljetus">Kuljetus</option>
+          <option value="pallonkasittely">Pallonkäsittely</option>
+          <option value="harhautukset">Harhautukset</option>
           <option value="muu">Muu</option>
         </select>
         <label class="form-label">XP-pisteet</label>
@@ -185,14 +187,11 @@
         </select>
         <label class="form-label">YouTube-linkki (valinnainen)</label>
         <input type="text" id="new-video" placeholder="https://youtube.com/..." />
-        <label class="form-label">Avautuu kun pelaajalla on XP</label>
-        <select id="new-unlock">
-          <option value="0">Heti auki kaikille</option>
-          <option value="10">10 XP ansaittu</option>
-          <option value="20">20 XP ansaittu</option>
-          <option value="30">30 XP ansaittu</option>
-          <option value="50">50 XP ansaittu</option>
-        </select>
+        <label class="form-label">Avautuu kun pelaajalla on kategorian XP vähintään</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <input type="text" id="new-unlock" placeholder="0" style="width:80px;margin-bottom:0;text-align:center" />
+          <span style="font-size:13px;color:#666">XP tässä kategoriassa (0 = heti auki)</span>
+        </div>
         <button class="add-btn" onclick="addChallenge()">+ Lisää harjoite</button>
       </div>
 
@@ -244,10 +243,11 @@ const db = getFirestore(fbApp);
 
 const COACH_PW = '1234';
 const CATS = {
-  pomputtelu: { label: 'Pomputtelu', cls: 'cat-pomputtelu' },
-  syotto:     { label: 'Syöttö',     cls: 'cat-syotto' },
-  kuljetus:   { label: 'Kuljetus',   cls: 'cat-kuljetus' },
-  muu:        { label: 'Muu',        cls: 'cat-muu' }
+  pomputtelu:      { label: 'Pomputtelu',      cls: 'cat-pomputtelu' },
+  syotto:          { label: 'Syöttö',          cls: 'cat-syotto' },
+  pallonkasittely: { label: 'Pallonkäsittely', cls: 'cat-pallonkasittely' },
+  harhautukset:    { label: 'Harhautukset',    cls: 'cat-harhautukset' },
+  muu:             { label: 'Muu',             cls: 'cat-muu' }
 };
 
 let players = [];
@@ -256,6 +256,14 @@ let currentPlayer = null;
 let catFilter = 'kaikki';
 
 function totalXP() { return challenges.reduce((s,c) => s + (c.xp||0), 0) || 1; }
+
+// Laske pelaajan ansaittu XP tietyssä kategoriassa
+function catXPearned(player, cat) {
+  const done = player.done || [];
+  return challenges
+    .filter(c => c.cat === cat && done.includes(c.id))
+    .reduce((s,c) => s + (c.xp||0), 0);
+}
 
 function getLevel(xp) {
   const pct = Math.round(xp / totalXP() * 100);
@@ -285,7 +293,6 @@ async function loadPlayers() {
   } catch(e) {
     setStatus('err','✗ Yhteys epäonnistui');
     showErr('err-player','Firebase-yhteys epäonnistui: '+e.message);
-    document.getElementById('player-list').innerHTML='<div class="loading" style="color:#A32D2D">Yhteys epäonnistui.</div>';
   }
 }
 
@@ -385,13 +392,15 @@ function renderPlayerApp() {
   if(visible.length===0){cl.innerHTML='<div class="loading">Ei harjoitteita vielä. Valmentaja lisää niitä.</div>';return;}
 
   visible.forEach(ch=>{
-    const isDone=done.includes(ch.id), isLocked=(xp<(ch.unlockAt||0))&&!isDone;
+    const isDone=done.includes(ch.id);
+    const earnedInCat = catXPearned(p, ch.cat);
+    const isLocked=(earnedInCat < (ch.unlockAt||0))&&!isDone;
     const cat=CATS[ch.cat]||CATS.muu;
     const card=document.createElement('div');
     card.className='card'+(isDone?' done':'')+(isLocked?' locked':'');
     const checkHtml=isDone?`<div class="check-circle"><svg width="11" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`:'';
     const vidHtml=ch.video&&!isLocked?`<a class="vid-link" href="${ch.video}" target="_blank">▶ Videoesimerkki</a>`:'';
-    const lockHtml=isLocked?`<span style="font-size:18px">🔒</span>`:'';
+    const lockHtml=isLocked?`<span style="font-size:18px" title="Vaatii ${ch.unlockAt} XP ${CATS[ch.cat]?.label||''}-kategoriassa (sinulla ${earnedInCat} XP)">🔒</span>`:'';
     const btnHtml=!isDone&&!isLocked?`<button class="mark-btn" onclick="window.markDone('${ch.id}',${ch.xp||10})">✓ Merkitse suoritetuksi</button>`:'';
     card.innerHTML=`
       <div style="display:flex;align-items:flex-start;gap:8px">
@@ -534,7 +543,7 @@ window.addChallenge = async () => {
       cat:document.getElementById('new-cat').value,
       xp:parseInt(document.getElementById('new-xp').value),
       video:document.getElementById('new-video').value.trim()||null,
-      unlockAt:parseInt(document.getElementById('new-unlock').value),
+      unlockAt:parseInt(document.getElementById('new-unlock').value)||0,
       createdAt:serverTimestamp()
     });
     document.getElementById('new-title').value='';
@@ -602,20 +611,22 @@ window.doSeasonReset = async () => {
 async function loadSeasonArchive() {
   const el = document.getElementById('season-archive');
   try {
-    // Kerää kaikkien pelaajien kaudet
-    const kaudetMap = {}; // kaudenNimi -> [{name, xp}]
+    // Kerää kaikkien pelaajien kaudet, tallenna doc-viitteet poistoa varten
+    const kaudetMap = {};
     for (const p of players) {
       const snap = await getDocs(collection(db,'players',p.id,'kaudet'));
       snap.docs.forEach(d => {
         const data = d.data();
-        if (!kaudetMap[data.nimi]) kaudetMap[data.nimi] = { date: data.date||'', pelaajat:[] };
+        if (!kaudetMap[data.nimi]) kaudetMap[data.nimi] = { date: data.date||'', pelaajat:[], docs:[] };
         kaudetMap[data.nimi].pelaajat.push({ name:p.name, xp:data.xp||0, suorituksia:data.suorituksia||0 });
+        kaudetMap[data.nimi].docs.push({ playerId:p.id, docId:d.id });
       });
     }
     const kaudet = Object.entries(kaudetMap).sort((a,b)=>b[1].date.localeCompare(a[1].date));
     if (!kaudet.length) { el.innerHTML='<div style="font-size:13px;color:#888">Ei arkistoituja kausia vielä.</div>'; return; }
     el.innerHTML = '';
     kaudet.forEach(([nimi, data]) => {
+      const safeId = btoa(nimi).replace(/[^a-z0-9]/gi,'');
       const block = document.createElement('div');
       block.style.cssText = 'margin-bottom:10px;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden';
       const sorted = [...data.pelaajat].sort((a,b)=>b.xp-a.xp);
@@ -625,12 +636,28 @@ async function loadSeasonArchive() {
           <span style="font-weight:500;color:#1a1a1a">${p.xp} XP · ${p.suorituksia} suoritusta</span>
         </div>`).join('');
       block.innerHTML = `
-        <div style="background:#f7f7f7;padding:8px 12px;font-size:12px;font-weight:600;color:#444">${nimi} <span style="font-weight:400;color:#888">· ${data.date}</span></div>
+        <div style="background:#f7f7f7;padding:8px 12px;font-size:12px;font-weight:600;color:#444;display:flex;justify-content:space-between;align-items:center">
+          <span>${nimi} <span style="font-weight:400;color:#888">· ${data.date}</span></span>
+          <button class="del-btn" onclick="window.showConfirm('confirm-season-${safeId}')">Poista</button>
+        </div>
+        <div class="confirm-bar" id="confirm-season-${safeId}" style="padding:8px 12px;background:#fff8f8">
+          Poistetaanko kausi pysyvästi?
+          <button class="confirm-yes" onclick="window.deleteSeason(${JSON.stringify(data.docs)})">Poista</button>
+          <button class="confirm-no" onclick="window.hideConfirm('confirm-season-${safeId}')">Peruuta</button>
+        </div>
         ${rows}`;
       el.appendChild(block);
     });
   } catch(e){ el.innerHTML='<div style="font-size:13px;color:#A32D2D">Virhe: '+e.message+'</div>'; }
 }
+
+window.deleteSeason = async (docs) => {
+  try {
+    await Promise.all(docs.map(d => deleteDoc(doc(db,'players',d.playerId,'kaudet',d.docId))));
+    showOk('ok-coach','✓ Kausi poistettu arkistosta.');
+    await loadCoach();
+  } catch(e){ showErr('err-coach','Poisto epäonnistui: '+e.message); }
+};
 
 await loadPlayers();
 await loadChallenges();
