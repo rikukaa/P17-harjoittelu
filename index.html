@@ -89,6 +89,7 @@
   </header>
 
   <span class="conn-status conn-wait" id="conn-status">⏳ Yhdistetään...</span>
+  <div id="debug-msg" style="font-size:12px;color:#888;margin-bottom:8px"></div>
 
   <div class="tab-bar">
     <button class="tab active" onclick="showTab('player')">Pelaaja</button>
@@ -277,6 +278,14 @@ function initials(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCa
 function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',6000); }
 function showOk(id, msg)  { const el=document.getElementById(id); if(!el)return; el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+function setStatus(state, msg) {
+  const el=document.getElementById('conn-status');
+  if(!el) return;
+  el.textContent=msg;
+  el.className='conn-status '+({ok:'conn-ok',err:'conn-err',wait:'conn-wait'}[state]||'conn-wait');
+  const dbg=document.getElementById('debug-msg');
+  if(dbg) dbg.textContent=msg;
+}
 
 window.showTab = (t) => {
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['player','coach'][i]===t));
@@ -285,13 +294,14 @@ window.showTab = (t) => {
 };
 
 async function loadPlayers() {
+  setStatus('wait','⏳ Ladataan pelaajia...');
   try {
     const snap = await getDocs(collection(db,'players'));
     players = snap.docs.map(d=>({id:d.id,...d.data()}));
-    setStatus('ok','✓ Yhdistetty Firebase-tietokantaan');
+    setStatus('ok','✓ Yhdistetty – '+players.length+' pelaajaa');
     renderPlayerSelect();
   } catch(e) {
-    setStatus('err','✗ Yhteys epäonnistui');
+    setStatus('err','✗ Virhe: '+e.message);
     showErr('err-player','Firebase-yhteys epäonnistui: '+e.message);
   }
 }
