@@ -85,6 +85,7 @@
   <header>
     <div>
       <h1>⚽ NuPS P17 omatoimiharjoittelu</h1>
+      <div class="sub" id="season-subtitle" style="margin-top:2px"></div>
     </div>
   </header>
 
@@ -145,6 +146,13 @@
       <div id="err-coach" class="err-box"></div>
       <div id="ok-coach" class="ok-box"></div>
 
+      <div class="section-title">Jakson nimi</div>
+      <div class="card" style="margin-bottom:1.25rem">
+        <label class="form-label">Näkyy etusivulla otsikon alla</label>
+        <input type="text" id="season-label-input" placeholder="esim. Toukokuu 2026" />
+        <button class="add-btn" onclick="saveSeasonLabel()">Tallenna</button>
+      </div>
+
       <div class="section-title">Yhteenveto</div>
       <div class="stat-grid" id="coach-stats"></div>
 
@@ -199,6 +207,12 @@
       <div class="section-title">Suoritushistoria</div>
       <div class="card" style="margin-bottom:1.25rem">
         <div id="history-list"><div class="loading">Ladataan...</div></div>
+        <div style="margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px">
+          <div id="clear-history-confirm" class="confirm-bar">
+            Tyhjennetäänkö koko suoritushistoria? <button class="confirm-yes" onclick="window.clearAllHistory()">Tyhjennä</button><button class="confirm-no" onclick="window.hideConfirm('clear-history-confirm')">Peruuta</button>
+          </div>
+          <button class="del-btn" style="width:100%;text-align:center" onclick="window.showConfirm('clear-history-confirm')">Tyhjennä suoritushistoria</button>
+        </div>
       </div>
 
       <div class="section-title">Kauden vaihto</div>
@@ -534,6 +548,7 @@ async function loadCoach() {
     }
     await loadHistory();
     await loadSeasonArchive();
+    await loadSeasonLabel();
   } catch(e){ showErr('err-coach','Lataus epäonnistui: '+e.message); }
 }
 
@@ -608,7 +623,48 @@ window.deleteChallenge = async (id) => {
   } catch(e){ showErr('err-coach','Poisto epäonnistui: '+e.message); }
 };
 
-window.showSeasonConfirm = () => {
+window.saveSeasonLabel = async () => {
+  const label = document.getElementById('season-label-input').value.trim();
+  try {
+    await updateDoc(doc(db,'settings','general'), { seasonLabel: label });
+  } catch(e) {
+    // Jos dokumenttia ei ole, luodaan se
+    await addDoc(collection(db,'settings'), { seasonLabel: label });
+  }
+  // Haetaan oikea doc ja päivitetään
+  try {
+    const snap = await getDocs(collection(db,'settings'));
+    if (!snap.empty) {
+      await updateDoc(snap.docs[0].ref, { seasonLabel: label });
+    } else {
+      await addDoc(collection(db,'settings'), { seasonLabel: label });
+    }
+    document.getElementById('season-subtitle').textContent = label;
+    showOk('ok-coach', '✓ Jakson nimi tallennettu!');
+  } catch(e){ showErr('err-coach','Tallennus epäonnistui: '+e.message); }
+};
+
+async function loadSeasonLabel() {
+  try {
+    const snap = await getDocs(collection(db,'settings'));
+    if (!snap.empty) {
+      const label = snap.docs[0].data().seasonLabel || '';
+      document.getElementById('season-subtitle').textContent = label;
+      document.getElementById('season-label-input').value = label;
+    }
+  } catch(e){ /* ei kriittinen */ }
+}
+
+window.clearAllHistory = async () => {
+  try {
+    for (const p of players) {
+      const hSnap = await getDocs(collection(db,'players',p.id,'history'));
+      await Promise.all(hSnap.docs.map(d => deleteDoc(d.ref)));
+    }
+    showOk('ok-coach','✓ Suoritushistoria tyhjennetty.');
+    await loadCoach();
+  } catch(e){ showErr('err-coach','Tyhjennys epäonnistui: '+e.message); }
+};
   const name = document.getElementById('season-name').value.trim();
   if (!name) { document.getElementById('season-name').focus(); return; }
   document.getElementById('season-confirm').style.display = 'block';
@@ -695,6 +751,7 @@ window.deleteSeason = async (safeId) => {
 
 await loadPlayers();
 await loadChallenges();
+await loadSeasonLabel();
 </script>
 </body>
 </html>
