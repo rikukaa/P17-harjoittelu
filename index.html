@@ -100,7 +100,7 @@
   <div id="sec-player" class="section active">
     <div id="err-player" class="err-box"></div>
     <div id="player-select-screen">
-      <div class="section-title" style="margin-bottom:12px">Kuka harjoittelee tänään?</div>
+      <div class="section-title" style="margin-bottom:12px">Valitse pelaaja alasvetovalikosta</div>
       <select id="player-dropdown" style="margin-bottom:10px">
         <option value="">– Valitse pelaaja –</option>
       </select>
@@ -242,7 +242,7 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 
-const COACH_PW = '1234';
+const COACH_PW = '0506';
 const CATS = {
   pomputtelu:      { label: 'Pomputtelu',      cls: 'cat-pomputtelu' },
   syotto:          { label: 'Syöttö',          cls: 'cat-syotto' },
@@ -412,8 +412,12 @@ function renderPlayerApp() {
     const vidHtml=ch.video&&!isLocked?`<a class="vid-link" href="${ch.video}" target="_blank">▶ Videoesimerkki</a>`:'';
     const lockHtml=isLocked?`<span style="font-size:18px" title="Vaatii ${ch.unlockAt} XP ${CATS[ch.cat]?.label||''}-kategoriassa (sinulla ${earnedInCat} XP)">🔒</span>`:'';
     const btnHtml=!isDone&&!isLocked?`<button class="mark-btn" onclick="window.markDone('${ch.id}',${ch.xp||10})">✓ Merkitse suoritetuksi</button>`:'';
+    const undoHtml=isDone?`
+      <div class="confirm-bar" id="undo-${ch.id}" style="margin-top:8px">
+        Perutaanko suoritus? <button class="confirm-yes" onclick="window.unmarkDone('${ch.id}',${ch.xp||10})">Peru</button><button class="confirm-no" onclick="window.hideConfirm('undo-${ch.id}')">Ei</button>
+      </div>`:'';
     card.innerHTML=`
-      <div style="display:flex;align-items:flex-start;gap:8px">
+      <div style="display:flex;align-items:flex-start;gap:8px" ${isDone?`onclick="window.showConfirm('undo-${ch.id}')" style="cursor:pointer"`:''}>
         <div style="flex:1;min-width:0">
           <span class="cat-pill ${cat.cls}">${cat.label}</span>
           <div class="ch-title${isDone?' done':''}">${ch.title}</div>
@@ -424,7 +428,7 @@ function renderPlayerApp() {
           <span class="xp-pill${isLocked?' locked':''}">+${ch.xp||10} XP</span>
           ${checkHtml}${lockHtml}
         </div>
-      </div>${btnHtml}`;
+      </div>${undoHtml}${btnHtml}`;
     cl.appendChild(card);
   });
 }
@@ -443,6 +447,23 @@ window.markDone = async (chId, xpAmt) => {
     showToast('🎉 +'+xpAmt+' XP – hienoa!');
     renderPlayerApp();
   } catch(e){ showErr('err-player','Tallennus epäonnistui: '+e.message); }
+};
+
+window.unmarkDone = async (chId, xpAmt) => {
+  const p=players.find(x=>x.id===currentPlayer);
+  if(!p||!(p.done||[]).includes(chId)) return;
+  const newXp=Math.max(0,(p.xp||0)-xpAmt);
+  const newDone=(p.done||[]).filter(id=>id!==chId);
+  try {
+    await updateDoc(doc(db,'players',currentPlayer),{xp:newXp,done:newDone});
+    // Poista viimeisin historia-merkintä tälle haasteelle
+    const hSnap=await getDocs(collection(db,'players',currentPlayer,'history'));
+    const match=hSnap.docs.filter(d=>d.data().chId===chId).pop();
+    if(match) await deleteDoc(match.ref);
+    p.xp=newXp; p.done=newDone;
+    showToast('Suoritus peruttu.');
+    renderPlayerApp();
+  } catch(e){ showErr('err-player','Peruutus epäonnistui: '+e.message); }
 };
 
 window.checkPw = () => {
@@ -620,8 +641,8 @@ window.doSeasonReset = async () => {
 
 async function loadSeasonArchive() {
   const el = document.getElementById('season-archive');
+  window._seasonDocs = {}; // talletetaan docs turvallisesti globaaliin muuttujaan
   try {
-    // Kerää kaikkien pelaajien kaudet, tallenna doc-viitteet poistoa varten
     const kaudetMap = {};
     for (const p of players) {
       const snap = await getDocs(collection(db,'players',p.id,'kaudet'));
@@ -636,7 +657,8 @@ async function loadSeasonArchive() {
     if (!kaudet.length) { el.innerHTML='<div style="font-size:13px;color:#888">Ei arkistoituja kausia vielä.</div>'; return; }
     el.innerHTML = '';
     kaudet.forEach(([nimi, data]) => {
-      const safeId = btoa(nimi).replace(/[^a-z0-9]/gi,'');
+      const safeId = btoa(unescape(encodeURIComponent(nimi))).replace(/[^a-z0-9]/gi,'');
+      window._seasonDocs[safeId] = data.docs; // tallennetaan turvallisesti
       const block = document.createElement('div');
       block.style.cssText = 'margin-bottom:10px;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden';
       const sorted = [...data.pelaajat].sort((a,b)=>b.xp-a.xp);
@@ -652,7 +674,7 @@ async function loadSeasonArchive() {
         </div>
         <div class="confirm-bar" id="confirm-season-${safeId}" style="padding:8px 12px;background:#fff8f8">
           Poistetaanko kausi pysyvästi?
-          <button class="confirm-yes" onclick="window.deleteSeason(${JSON.stringify(data.docs)})">Poista</button>
+          <button class="confirm-yes" onclick="window.deleteSeason('${safeId}')">Poista</button>
           <button class="confirm-no" onclick="window.hideConfirm('confirm-season-${safeId}')">Peruuta</button>
         </div>
         ${rows}`;
@@ -661,7 +683,9 @@ async function loadSeasonArchive() {
   } catch(e){ el.innerHTML='<div style="font-size:13px;color:#A32D2D">Virhe: '+e.message+'</div>'; }
 }
 
-window.deleteSeason = async (docs) => {
+window.deleteSeason = async (safeId) => {
+  const docs = window._seasonDocs[safeId];
+  if (!docs) { showErr('err-coach','Virhe: kauden tietoja ei löydy.'); return; }
   try {
     await Promise.all(docs.map(d => deleteDoc(doc(db,'players',d.playerId,'kaudet',d.docId))));
     showOk('ok-coach','✓ Kausi poistettu arkistosta.');
