@@ -320,6 +320,16 @@ let catFilter = 'kaikki';
 
 function totalXP() { return challenges.reduce((s,c) => s + (c.xp||0), 0) || 1; }
 
+function getLevelByXpAndMax(xp, max) {
+  const t = max || totalXP();
+  const pct = Math.round(xp / t * 100);
+  if (pct >= 100) return 'Mestari 🏆';
+  if (pct >= 75)  return 'Edistynyt';
+  if (pct >= 50)  return 'Taitava';
+  if (pct >= 25)  return 'Harjoittelija';
+  return 'Aloittelija';
+}
+
 // Laske pelaajan ansaittu XP tietyssä kategoriassa
 function catXPearned(player, cat) {
   const done = player.done || [];
@@ -435,11 +445,17 @@ window.logOut = () => {
 async function selectPlayer(id) {
   currentPlayer=id; catFilter='kaikki';
   await loadChallenges();
-  // Lataa pelaajan historia profiilia varten
+  // Lataa pelaajan historia ja kaudet profiilia varten
   try {
-    const hSnap = await getDocs(collection(db,'players',id,'history'));
+    const [hSnap, kSnap] = await Promise.all([
+      getDocs(collection(db,'players',id,'history')),
+      getDocs(collection(db,'players',id,'kaudet'))
+    ]);
     const p = players.find(x=>x.id===id);
-    if(p) p._history = hSnap.docs.map(d=>d.data()).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(p) {
+      p._history = hSnap.docs.map(d=>d.data()).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      p._kaudet = kSnap.docs.map(d=>d.data()).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    }
   } catch(e){}
   document.getElementById('player-select-screen').style.display='none';
   document.getElementById('player-app').style.display='block';
@@ -572,7 +588,19 @@ window.openProfile = () => {
       `).join('')}
     </div>
     <div class="section-title" style="margin-bottom:8px">Viimeisimmät suoritukset</div>
-    <div class="card">${historyRows}</div>`;
+    <div class="card">${historyRows}</div>
+    ${(p._kaudet&&p._kaudet.length) ? `
+    <div class="section-title" style="margin-bottom:8px;margin-top:1rem">Aiemmat kaudet</div>
+    <div class="card">
+      ${p._kaudet.map(k=>`
+        <div class="history-row">
+          <span><span style="font-weight:600;color:#1a1a1a">${k.nimi||'Kausi'}</span></span>
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="level-badge">${getLevelByXpAndMax(k.xp||0, k.totalXP||null)}</span>
+            <span style="font-size:12px;color:#888">${k.xp||0} XP</span>
+          </span>
+        </div>`).join('')}
+    </div>` : ''}`;
 
   document.getElementById('profile-modal').classList.add('show');
 };
@@ -841,10 +869,11 @@ window.doSeasonReset = async () => {
   if (!name) return;
   try {
     const date = new Date().toISOString().split('T')[0];
+    const snapTotalXP = totalXP();
     // Arkistoi jokaisen pelaajan XP ja nollaa
     for (const p of players) {
       await addDoc(collection(db,'players',p.id,'kaudet'), {
-        nimi: name, xp: p.xp||0, suorituksia: (p.done||[]).length, date, ts: serverTimestamp()
+        nimi: name, xp: p.xp||0, suorituksia: (p.done||[]).length, date, totalXP: snapTotalXP, ts: serverTimestamp()
       });
       // Poista historia
       const hSnap = await getDocs(collection(db,'players',p.id,'history'));
