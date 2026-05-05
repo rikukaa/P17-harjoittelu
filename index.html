@@ -4,153 +4,245 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NuPS P17 omatoimiharjoittelu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --red: #C8001A;
+      --red-dark: #9A0014;
+      --red-dim: rgba(200,0,26,0.08);
+      --red-border: rgba(200,0,26,0.2);
+      --bg: #f4f4f4;
+      --bg2: #ffffff;
+      --bg3: #f8f8f8;
+      --border: #e4e4e4;
+      --text: #111111;
+      --text2: #777777;
+      --blue: #1a6fc4;
+      --blue-dim: rgba(26,111,196,0.09);
+      --amber: #b06000;
+      --amber-dim: rgba(176,96,0,0.09);
+      --purple: #6a3fa0;
+      --purple-dim: rgba(106,63,160,0.09);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; min-height: 100vh; }
-    .app { max-width: 520px; margin: 0 auto; padding: 1rem; }
-    header { display: flex; align-items: center; gap: 10px; padding: 1rem 0 1.25rem; border-bottom: 1px solid #e0e0e0; margin-bottom: 1.25rem; }
-    header img { width: 36px; height: 36px; }
-    header h1 { font-size: 17px; font-weight: 600; color: #1a1a1a; }
-    header .sub { font-size: 12px; color: #888; }
-    .conn-status { font-size: 11px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 1rem; }
-    .conn-ok { background: #E1F5EE; color: #085041; }
-    .conn-err { background: #FCEBEB; color: #A32D2D; }
-    .conn-wait { background: #f0f0f0; color: #888; }
-    .tab-bar { display: flex; gap: 6px; margin-bottom: 1.25rem; border-bottom: 1px solid #e0e0e0; }
-    .tab { font-size: 13px; font-weight: 500; padding: 6px 14px; border: none; background: transparent; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-    .tab.active { color: #1D9E75; border-bottom-color: #1D9E75; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .app { max-width: 520px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+
+    /* HEADER */
+    header { padding: 1.25rem 0 1rem; margin-bottom: 1.25rem; }
+    .header-inner { display: flex; align-items: center; gap: 12px; }
+    .header-icon { width: 40px; height: 40px; background: var(--red-dim); border: 1px solid var(--red-border); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: 0.01em; line-height: 1.1; }
+    header h1 span { color: var(--red); }
+    .season-tag { display: inline-block; font-size: 10px; font-weight: 700; color: var(--red); background: var(--red-dim); border: 1px solid var(--red-border); border-radius: 20px; padding: 2px 9px; margin-top: 3px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .header-divider { height: 1px; background: var(--border); margin-top: 1rem; }
+
+    /* STATUS DOT */
+    .conn-status { display: none; }
+
+    /* TABS */
+    .tab-bar { display: flex; gap: 6px; margin-bottom: 1.25rem; border-bottom: 1.5px solid var(--border); padding-bottom: 0; background: transparent; padding: 0; border-radius: 0; }
+    .tab { font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; padding: 8px 14px; border: none; background: transparent; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1.5px; border-radius: 0; transition: all 0.15s; }
+    .tab.active { color: var(--red); border-bottom-color: var(--red); }
+    .tab.coach-tab { font-size: 12px; font-weight: 500; color: #aaa; }
+    .tab.coach-tab.active { color: var(--text2); border-bottom-color: var(--text2); }
     .section { display: none; } .section.active { display: block; }
-    .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; }
-    .card.done { border-color: #1D9E75; background: #E1F5EE; }
-    .card.locked { opacity: 0.45; }
-    .card.clickable { cursor: pointer; transition: box-shadow 0.15s; }
-    .card.clickable:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .cat-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; display: inline-block; margin-bottom: 4px; }
-    .cat-pomputtelu { background: #E1F5EE; color: #085041; }
-    .cat-syotto { background: #E6F1FB; color: #0C447C; }
-    .cat-pallonkasittely { background: #FAEEDA; color: #633806; }
-    .cat-harhautukset { background: #F3E8FB; color: #5C0F8B; }
-    .cat-muu { background: #F1EFE8; color: #444; }
-    .xp-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #E1F5EE; color: #085041; font-weight: 500; white-space: nowrap; }
-    .xp-pill.locked { background: #f0f0f0; color: #888; }
-    .ch-title { font-size: 15px; font-weight: 500; color: #1a1a1a; margin: 2px 0; }
-    .ch-title.done { color: #0F6E56; }
-    .ch-desc { font-size: 13px; color: #666; }
-    .ch-desc.done { color: #0F6E56; }
-    .vid-link { font-size: 12px; color: #185FA5; display: inline-block; margin-top: 5px; }
-    .mark-btn { margin-top: 10px; width: 100%; padding: 9px; font-size: 13px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; }
-    .mark-btn:hover { background: #0F6E56; }
-    .xp-bar-bg { height: 6px; background: #eee; border-radius: 6px; overflow: hidden; margin: 6px 0; }
-    .xp-bar-fill { height: 100%; background: #1D9E75; border-radius: 6px; transition: width 0.4s; }
+
+    /* CARDS */
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s; }
+    .card.done { border-color: var(--red-border); background: #fff; }
+    .card.locked { opacity: 0.4; }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:hover { border-color: #ccc; }
+
+    /* CATEGORY PILLS */
+    .cat-pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .cat-pomputtelu { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-border); }
+    .cat-syotto { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(26,111,196,0.2); }
+    .cat-pallonkasittely { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(176,96,0,0.2); }
+    .cat-harhautukset { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(106,63,160,0.2); }
+    .cat-muu { background: #f0f0f0; color: var(--text2); border: 1px solid var(--border); }
+
+    /* XP PILL */
+    .xp-pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--red-dim); color: var(--red); border: 1px solid var(--red-border); white-space: nowrap; }
+    .xp-pill.locked { background: #f0f0f0; color: #bbb; border-color: #e0e0e0; }
+
+    /* CHALLENGE TITLES */
+    .ch-title { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin: 2px 0; }
+    .ch-title.done { color: var(--red); }
+    .ch-desc { font-size: 13px; color: var(--text2); line-height: 1.4; }
+    .ch-desc.done { color: var(--text2); }
+    .vid-link { font-size: 12px; color: var(--blue); display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; text-decoration: none; }
+    .vid-link:hover { text-decoration: underline; }
+
+    /* BUTTONS */
+    .mark-btn { margin-top: 10px; width: 100%; padding: 9px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 700; background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; letter-spacing: 0.02em; transition: background 0.15s; }
+    .mark-btn:hover { background: var(--red-dark); }
+    .add-btn { width: 100%; padding: 9px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-top: 4px; transition: background 0.15s; }
+    .add-btn:hover { background: var(--red-dark); }
+    .pw-btn { padding: 9px 24px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; }
+
+    /* XP BAR */
+    .xp-bar-bg { height: 5px; background: #ebebeb; border-radius: 6px; overflow: hidden; margin: 5px 0; }
+    .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--red-dark), var(--red)); border-radius: 6px; transition: width 0.5s; }
+
+    /* STATS */
     .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
-    .stat-box { background: #f7f7f7; border-radius: 10px; padding: 10px 12px; }
-    .stat-label { font-size: 11px; color: #888; margin-bottom: 3px; }
-    .stat-val { font-size: 20px; font-weight: 600; color: #1a1a1a; }
-    .player-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .stat-label { font-size: 10px; font-weight: 700; color: var(--text2); margin-bottom: 3px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 800; color: var(--text); }
+
+    /* PLAYER ROW */
+    .player-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .player-row:last-child { border-bottom: none; }
-    .avatar { width: 36px; height: 36px; border-radius: 50%; background: #E1F5EE; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #085041; flex-shrink: 0; }
-    .level-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #E6F1FB; color: #0C447C; font-weight: 500; white-space: nowrap; }
-    .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
-    .filter-btn { font-size: 12px; padding: 4px 10px; border: 1px solid #ddd; border-radius: 20px; background: transparent; cursor: pointer; color: #666; }
-    .filter-btn.active { background: #1D9E75; color: white; border-color: #1D9E75; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--red-dim); border: 1px solid var(--red-border); display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; color: var(--red); flex-shrink: 0; }
+    .level-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--red-dim); color: var(--red); border: 1px solid var(--red-border); white-space: nowrap; letter-spacing: 0.03em; }
+
+    /* FILTER BAR */
+    .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .filter-btn { font-size: 11px; font-weight: 600; padding: 4px 11px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg2); cursor: pointer; color: var(--text2); transition: all 0.12s; }
+    .filter-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
+    .filter-btn:hover:not(.active) { border-color: #bbb; color: var(--text); }
+
+    /* FORMS */
     select, input[type=text], input[type=password], textarea {
       width: 100%; margin-bottom: 8px; font-size: 13px; padding: 8px 10px;
-      border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a;
-      font-family: inherit;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg2); color: var(--text); font-family: 'Barlow', sans-serif;
+      transition: border-color 0.15s;
     }
+    select:focus, input:focus, textarea:focus { outline: none; border-color: var(--red-border); }
     textarea { height: 60px; resize: vertical; }
-    .form-label { font-size: 12px; color: #666; margin-bottom: 3px; display: block; }
-    .add-btn { width: 100%; padding: 9px; font-size: 13px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 4px; }
-    .add-btn:hover { background: #0F6E56; }
-    .section-title { font-size: 12px; font-weight: 600; color: #888; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
-    .check-circle { width: 20px; height: 20px; background: #1D9E75; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .history-row { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; color: #666; display: flex; justify-content: space-between; gap: 8px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 4px; display: block; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* SECTION TITLE */
+    .section-title { font-size: 10px; font-weight: 800; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+
+    /* CHECK CIRCLE */
+    .check-circle { width: 20px; height: 20px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* HISTORY */
+    .history-row { font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--text2); display: flex; justify-content: space-between; gap: 8px; }
     .history-row:last-child { border-bottom: none; }
-    .toast { background: #1D9E75; color: white; font-size: 14px; padding: 10px 20px; border-radius: 24px; text-align: center; position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.15); white-space: nowrap; }
-    .loading { text-align: center; padding: 1.5rem; font-size: 13px; color: #888; }
-    .err-box { background: #FCEBEB; color: #A32D2D; border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
-    .ok-box { background: #E1F5EE; color: #085041; border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
+
+    /* TOAST */
+    .toast { background: var(--red); color: #fff; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 700; padding: 9px 20px; border-radius: 24px; text-align: center; position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: none; box-shadow: 0 4px 16px rgba(200,0,26,0.25); white-space: nowrap; }
+
+    /* MISC */
+    .loading { text-align: center; padding: 1.5rem; font-size: 13px; color: var(--text2); }
+    .err-box { background: #fff0f1; color: #c0001a; border: 1px solid #fcc; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
+    .ok-box { background: #f0faf4; color: #1a6e3c; border: 1px solid #b8e0c8; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
     .pw-wrap { text-align: center; padding: 2.5rem 0; }
-    .pw-btn { padding: 8px 24px; font-size: 13px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; }
-    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1rem 0; }
-    .del-btn { font-size: 12px; padding: 3px 10px; border: 1px solid #e0b0b0; border-radius: 20px; background: #fff; color: #A32D2D; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-    .del-btn:hover { background: #FCEBEB; }
-    .confirm-bar { display: none; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px; color: #A32D2D; }
-    .confirm-yes { padding: 4px 12px; font-size: 12px; background: #A32D2D; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    .confirm-no  { padding: 4px 12px; font-size: 12px; background: #f0f0f0; color: #444; border: none; border-radius: 6px; cursor: pointer; }
-    /* Tasonousu-animaatio */
-    .levelup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+    /* DEL / CONFIRM */
+    .del-btn { font-size: 11px; font-weight: 600; padding: 3px 9px; border: 1px solid #f0b0b8; border-radius: 20px; background: #fff; color: #c0001a; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .del-btn:hover { background: #fff0f1; }
+    .confirm-bar { display: none; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px; color: #c0001a; flex-wrap: wrap; }
+    .confirm-yes { padding: 4px 12px; font-size: 12px; font-weight: 700; background: #c0001a; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .confirm-no  { padding: 4px 12px; font-size: 12px; font-weight: 500; background: #eee; color: #555; border: none; border-radius: 6px; cursor: pointer; }
+
+    /* LEVEL-UP */
+    .levelup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; backdrop-filter: blur(3px); }
     .levelup-overlay.show { opacity: 1; pointer-events: auto; }
-    .levelup-box { background: #fff; border-radius: 20px; padding: 2rem 2.5rem; text-align: center; transform: scale(0.8); transition: transform 0.3s; max-width: 280px; }
-    .levelup-overlay.show .levelup-box { transform: scale(1); }
-    .levelup-icon { font-size: 52px; margin-bottom: 8px; }
-    .levelup-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
-    .levelup-sub { font-size: 14px; color: #666; margin-bottom: 1.25rem; }
-    .levelup-btn { padding: 10px 28px; font-size: 14px; font-weight: 600; background: #1D9E75; color: white; border: none; border-radius: 10px; cursor: pointer; }
-    /* Profiilimodaali */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 998; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+    .levelup-box { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 2rem 2rem; text-align: center; transform: scale(0.88) translateY(16px); transition: transform 0.3s cubic-bezier(.34,1.5,.64,1); max-width: 290px; box-shadow: 0 16px 48px rgba(0,0,0,0.18); }
+    .levelup-overlay.show .levelup-box { transform: scale(1) translateY(0); }
+    .levelup-icon { font-size: 48px; margin-bottom: 8px; }
+    .levelup-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; color: var(--red); margin-bottom: 4px; }
+    .levelup-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; }
+    .levelup-btn { padding: 9px 26px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 700; background: var(--red); color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+
+    /* PROFILE MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 998; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
     .modal-overlay.show { opacity: 1; pointer-events: auto; }
-    .modal-box { background: #fff; border-radius: 20px 20px 0 0; padding: 1.5rem 1.25rem; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s; }
+    .modal-box { background: #fff; border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 1.25rem 1.25rem; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(.4,0,.2,1); }
     .modal-overlay.show .modal-box { transform: translateY(0); }
-    .modal-title { font-size: 17px; font-weight: 700; color: #1a1a1a; margin-bottom: 1rem; }
-    .cat-stat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .cat-stat-label { font-size: 13px; color: #444; width: 110px; flex-shrink: 0; }
-    .cat-stat-bar-bg { flex: 1; height: 8px; background: #eee; border-radius: 8px; overflow: hidden; }
-    .cat-stat-bar-fill { height: 100%; border-radius: 8px; background: #1D9E75; transition: width 0.5s; }
-    .cat-stat-pct { font-size: 12px; color: #888; width: 32px; text-align: right; flex-shrink: 0; }
-    /* Muokkauslomake */
-    .edit-form { background: #f7f7f7; border-radius: 10px; padding: 12px; margin-top: 8px; display: none; }
-    .edit-btn { font-size: 12px; padding: 3px 10px; border: 1px solid #b0c8e0; border-radius: 20px; background: #fff; color: #0C447C; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-    .edit-btn:hover { background: #E6F1FB; }
-    .save-btn { padding: 6px 14px; font-size: 12px; font-weight: 500; background: #1D9E75; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 6px; }
-    .cancel-btn { padding: 6px 14px; font-size: 12px; background: #f0f0f0; color: #444; border: none; border-radius: 6px; cursor: pointer; }
+    .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 1rem; }
+    .cat-stat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+    .cat-stat-label { font-size: 12px; color: var(--text2); width: 110px; flex-shrink: 0; }
+    .cat-stat-bar-bg { flex: 1; height: 5px; background: #ebebeb; border-radius: 6px; overflow: hidden; }
+    .cat-stat-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--red-dark), var(--red)); transition: width 0.5s; }
+    .cat-stat-pct { font-size: 11px; font-weight: 700; color: var(--text2); width: 30px; text-align: right; flex-shrink: 0; }
+
+    /* EDIT FORM */
+    .edit-form { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; display: none; }
+    .edit-btn { font-size: 11px; font-weight: 600; padding: 3px 9px; border: 1px solid #c0d4ec; border-radius: 20px; background: #fff; color: var(--blue); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .edit-btn:hover { background: var(--blue-dim); }
+    .save-btn { padding: 5px 14px; font-size: 12px; font-weight: 700; background: var(--red); color: #fff; border: none; border-radius: 6px; cursor: pointer; margin-right: 6px; }
+    .cancel-btn { padding: 5px 12px; font-size: 12px; font-weight: 500; background: #eee; color: #555; border: none; border-radius: 6px; cursor: pointer; }
+
+    /* PLAYER SELECT */
+    .overview-btn { width: 100%; padding: 9px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; background: #fff; color: var(--text2); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s; }
+    .overview-btn:hover { border-color: #bbb; color: var(--text); }
+
+    /* VAIHDA / PROFIILI */
+    .vaihda-btn { font-size: 12px; font-weight: 500; padding: 4px 11px; border: 1px solid var(--border); border-radius: 20px; background: #fff; cursor: pointer; color: var(--text2); }
+    .vaihda-btn:hover { border-color: #bbb; }
+    .profiili-btn { font-size: 12px; font-weight: 600; padding: 4px 11px; border: 1px solid var(--red-border); border-radius: 20px; background: #fff; cursor: pointer; color: var(--red); }
+    .profiili-btn:hover { background: var(--red-dim); }
+
+    /* SEASON CARD */
+    .season-card-header { background: var(--bg3); padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div>
-      <h1>⚽ NuPS P17 omatoimiharjoittelu</h1>
-      <div class="sub" id="season-subtitle" style="margin-top:2px"></div>
+    <div class="header-inner">
+      <div class="header-icon">⚽</div>
+      <div style="flex:1">
+        <h1>NuPS <span>P17</span> omatoimiharjoittelu</h1>
+        <div id="season-subtitle"></div>
+      </div>
+      <div id="conn-dot" style="width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;margin-top:2px" title="Yhdistetään..."></div>
     </div>
+    <div class="header-divider"></div>
   </header>
 
-  <span class="conn-status conn-wait" id="conn-status">⏳ Yhdistetään...</span>
-  <div id="debug-msg" style="font-size:12px;color:#888;margin-bottom:8px"></div>
+  <span class="conn-status conn-wait" id="conn-status" style="display:none"></span>
+  <div id="debug-msg" style="font-size:11px;color:var(--text2);margin-bottom:8px"></div>
 
   <div class="tab-bar">
-    <button class="tab active" onclick="showTab('player')">Pelaaja</button>
-    <button class="tab" onclick="showTab('coach')">Valmentaja</button>
+    <button class="tab active" onclick="showTab('player')">⚽ Pelaaja</button>
+    <button class="tab coach-tab" onclick="showTab('coach')">Valmentaja</button>
   </div>
 
   <!-- PELAAJA -->
   <div id="sec-player" class="section active">
     <div id="err-player" class="err-box"></div>
     <div id="player-select-screen">
-      <div class="section-title" style="margin-bottom:12px">Valitse pelaaja alasvetovalikosta</div>
+      <div class="section-title" style="margin-bottom:10px">Valitse pelaaja</div>
       <select id="player-dropdown" style="margin-bottom:10px">
         <option value="">– Valitse pelaaja –</option>
       </select>
-      <button onclick="selectFromDropdown()" style="width:100%;padding:9px;font-size:13px;font-weight:500;background:#1D9E75;color:white;border:none;border-radius:8px;cursor:pointer;margin-bottom:1rem">Aloita harjoittelu</button>
-      <button onclick="toggleOverview()" style="width:100%;padding:9px;font-size:13px;font-weight:500;background:#fff;color:#1D9E75;border:1px solid #1D9E75;border-radius:8px;cursor:pointer">📊 Kaikkien tilanne</button>
+      <button onclick="selectFromDropdown()" class="add-btn" style="margin-bottom:10px">Merkitse suorituksia →</button>
+      <button onclick="toggleOverview()" class="overview-btn" id="overview-toggle-btn">📊 Kokonaistilanne</button>
       <div id="overview-panel" style="display:none;margin-top:1rem">
-        <div class="section-title" style="margin-bottom:8px">Kaikkien tilanne</div>
+        <div class="section-title" style="margin-bottom:8px">Kokonaistilanne</div>
         <div id="overview-list"></div>
       </div>
     </div>
     <div id="player-app" style="display:none">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f0f0f0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)">
         <div id="p-avatar" class="avatar"></div>
         <div style="flex:1">
-          <div id="p-name" style="font-size:16px;font-weight:600;color:#1a1a1a"></div>
-          <div id="p-level" style="font-size:12px;color:#888"></div>
+          <div id="p-name" style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--text)"></div>
+          <div id="p-level" style="font-size:12px;color:var(--text2);margin-top:1px"></div>
         </div>
-        <button onclick="openProfile()" style="font-size:12px;padding:4px 12px;border:1px solid #1D9E75;border-radius:20px;background:#fff;cursor:pointer;color:#1D9E75">Profiili</button>
-        <button onclick="logOut()" style="font-size:12px;padding:4px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;cursor:pointer;color:#666">Vaihda</button>
+        <button onclick="openProfile()" class="profiili-btn">Profiili</button>
+        <button onclick="logOut()" class="vaihda-btn">Poistu</button>
       </div>
-      <div style="margin-bottom:1rem">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
-          <span id="p-xp-label"></span><span id="p-pct"></span>
+      <div style="margin-bottom:1.25rem">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;letter-spacing:0.03em">
+          <span id="p-xp-label"></span><span id="p-pct" style="color:var(--red)"></span>
         </div>
         <div class="xp-bar-bg"><div class="xp-bar-fill" id="p-xp-fill" style="width:0%"></div></div>
       </div>
@@ -351,12 +443,13 @@ function showErr(id, msg) { const el=document.getElementById(id); el.textContent
 function showOk(id, msg)  { const el=document.getElementById(id); if(!el)return; el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 function setStatus(state, msg) {
-  const el=document.getElementById('conn-status');
-  if(!el) return;
-  el.textContent=msg;
-  el.className='conn-status '+({ok:'conn-ok',err:'conn-err',wait:'conn-wait'}[state]||'conn-wait');
-  const dbg=document.getElementById('debug-msg');
-  if(dbg) dbg.textContent=msg;
+  const dot = document.getElementById('conn-dot');
+  if (dot) {
+    dot.style.background = state==='ok' ? 'var(--red)' : state==='err' ? '#FF4D6A' : '#555';
+    dot.title = msg;
+  }
+  const dbg = document.getElementById('debug-msg');
+  if (dbg) dbg.textContent = state==='err' ? msg : '';
 }
 
 window.showTab = (t) => {
@@ -399,7 +492,7 @@ function renderOverview() {
   const el = document.getElementById('overview-list');
   if (!players.length) { el.innerHTML = '<div class="loading">Ei pelaajia vielä.</div>'; return; }
   el.innerHTML = '';
-  [...players].sort((a,b) => (b.xp||0) - (a.xp||0)).forEach(p => {
+  [...players].sort((a,b) => (b.xp||0) - (a.xp||0)).forEach((p, i) => {
     const xp = p.xp||0, done = (p.done||[]).length;
     const pct = Math.round(Math.min(xp, totalXP()) / totalXP() * 100);
     const row = document.createElement('div');
@@ -407,13 +500,14 @@ function renderOverview() {
     row.style.marginBottom = '8px';
     row.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--red);width:24px;text-align:center;flex-shrink:0">${i+1}</div>
         <div class="avatar">${initials(p.name)}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:600;color:#1a1a1a">${p.name}</div>
-          <div style="font-size:11px;color:#888;margin:2px 0">${getLevel(xp)} · ${xp} XP · ${done} suoritusta</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--text)">${p.name}</div>
+          <div style="font-size:11px;color:var(--text2);margin:2px 0">${getLevel(xp)} · ${xp} XP · ${done} suoritusta</div>
           <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
         </div>
-        <span class="level-badge">${getLevel(xp)}</span>
+        <span class="level-badge">${pct}%</span>
       </div>`;
     el.appendChild(row);
   });
@@ -424,7 +518,7 @@ window.toggleOverview = () => {
   const visible = panel.style.display === 'none';
   panel.style.display = visible ? 'block' : 'none';
   if (visible) renderOverview();
-  document.querySelector('[onclick="toggleOverview()"]').textContent = visible ? '✕ Sulje tilanne' : '📊 Kaikkien tilanne';
+  document.getElementById('overview-toggle-btn').textContent = visible ? '✕ Sulje tilanne' : '📊 Kokonaistilanne';
 };
 
 window.selectFromDropdown = async () => {
@@ -438,7 +532,7 @@ window.logOut = () => {
   document.getElementById('player-select-screen').style.display='block';
   document.getElementById('player-app').style.display='none';
   document.getElementById('overview-panel').style.display='none';
-  document.querySelector('[onclick="toggleOverview()"]').textContent='📊 Kaikkien tilanne';
+  document.getElementById('overview-toggle-btn').textContent='📊 Kokonaistilanne';
   loadPlayers();
 };
 
@@ -830,7 +924,8 @@ window.saveSeasonLabel = async () => {
     } else {
       await addDoc(collection(db,'settings'), { seasonLabel: label });
     }
-    document.getElementById('season-subtitle').textContent = label;
+    const el = document.getElementById('season-subtitle');
+    if (el) el.innerHTML = label ? `<span class="season-tag">${label}</span>` : '';
     showOk('ok-coach', '✓ Jakson nimi tallennettu!');
   } catch(e){ showErr('err-coach','Tallennus epäonnistui: '+e.message); }
 };
@@ -840,10 +935,12 @@ async function loadSeasonLabel() {
     const snap = await getDocs(collection(db,'settings'));
     if (!snap.empty) {
       const label = snap.docs[0].data().seasonLabel || '';
-      document.getElementById('season-subtitle').textContent = label;
-      document.getElementById('season-label-input').value = label;
+      const el = document.getElementById('season-subtitle');
+      if (el && label) el.innerHTML = `<span class="season-tag">${label}</span>`;
+      const inp = document.getElementById('season-label-input');
+      if (inp) inp.value = label;
     }
-  } catch(e){ /* ei kriittinen */ }
+  } catch(e){}
 }
 
 window.clearAllHistory = async () => {
