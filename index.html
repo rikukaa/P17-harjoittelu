@@ -191,6 +191,15 @@
 
     /* SEASON CARD */
     .season-card-header { background: var(--bg3); padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
+
+    /* ACCORDION */
+    .accordion-btn { width:100%; display:flex; align-items:center; justify-content:space-between; padding:11px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; transition:border-color 0.15s; }
+    .accordion-btn:hover { border-color:#bbb; }
+    .accordion-btn.open { border-color:var(--red); color:var(--red); border-radius:var(--radius-sm) var(--radius-sm) 0 0; margin-bottom:0; }
+    .acc-count { font-size:11px; font-weight:600; color:var(--text2); background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:1px 8px; margin-left:auto; margin-right:8px; }
+    .acc-arrow { font-size:12px; color:var(--text2); transition:transform 0.2s; }
+    .accordion-btn.open .acc-arrow { transform:rotate(180deg); color:var(--red); }
+    .accordion-body { display:none; background:var(--bg2); border:1px solid var(--red-border); border-top:none; border-radius:0 0 var(--radius-sm) var(--radius-sm); padding:12px 14px; margin-bottom:8px; }
   </style>
 </head>
 <body>
@@ -275,81 +284,94 @@
       <div class="section-title">Yhteenveto</div>
       <div class="stat-grid" id="coach-stats"></div>
 
-      <div class="section-title">Pelaajat</div>
-      <div class="card" style="margin-bottom:1.25rem">
-        <div id="coach-player-list"><div class="loading">Ladataan...</div></div>
-      </div>
-
-      <div class="section-title">Lisää pelaaja</div>
-      <div class="card" style="margin-bottom:1.25rem">
-        <label class="form-label">Pelaajan nimi</label>
-        <input type="text" id="new-player-name" placeholder="esim. Mikael Korhonen" />
-        <button class="add-btn" onclick="addPlayer()">+ Lisää pelaaja</button>
-      </div>
-
-      <div class="section-title">Harjoitteet</div>
-      <div class="card" style="margin-bottom:1.25rem">
-        <div id="coach-challenge-list"><div class="loading">Ladataan...</div></div>
-      </div>
-
-      <div class="section-title">Lisää harjoite</div>
-      <div class="card" style="margin-bottom:1.25rem">
-        <label class="form-label">Nimi</label>
-        <input type="text" id="new-title" placeholder="esim. Pomputtele 30 kertaa" />
-        <label class="form-label">Kuvaus</label>
-        <textarea id="new-desc" placeholder="Mitä tehdään..."></textarea>
-        <label class="form-label">Kategoria</label>
-        <select id="new-cat">
-          <option value="pomputtelu">Pomputtelu</option>
-          <option value="syotto">Syöttö</option>
-          <option value="pallonkasittely">Pallonkäsittely</option>
-          <option value="harhautukset">Harhautukset</option>
-          <option value="muu">Muu</option>
-        </select>
-        <label class="form-label">XP-pisteet</label>
-        <select id="new-xp">
-          <option value="5">5 XP – helppo</option>
-          <option value="10" selected>10 XP – normaali</option>
-          <option value="15">15 XP – vaativa</option>
-          <option value="20">20 XP – haaste</option>
-        </select>
-        <label class="form-label">YouTube-linkki (valinnainen)</label>
-        <input type="text" id="new-video" placeholder="https://youtube.com/..." />
-        <label class="form-label">Avautuu kun pelaajalla on kategorian XP vähintään</label>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <input type="text" id="new-unlock" placeholder="0" style="width:80px;margin-bottom:0;text-align:center" />
-          <span style="font-size:13px;color:#666">XP tässä kategoriassa (0 = heti auki)</span>
+      <!-- Pelaajat accordion -->
+      <button class="accordion-btn" onclick="toggleAccordion('acc-players')">
+        <span>Pelaajat</span><span class="acc-count" id="acc-players-count"></span><span class="acc-arrow">▾</span>
+      </button>
+      <div class="accordion-body" id="acc-players">
+        <div id="coach-player-list" style="margin-bottom:10px"><div class="loading">Ladataan...</div></div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
+          <div style="display:flex;gap:8px">
+            <input type="text" id="new-player-name" placeholder="Lisää pelaaja..." style="margin-bottom:0;flex:1" />
+            <button class="add-btn" style="width:auto;padding:8px 14px;margin-top:0;white-space:nowrap" onclick="addPlayer()">+ Lisää</button>
+          </div>
         </div>
-        <button class="add-btn" onclick="addChallenge()">+ Lisää harjoite</button>
       </div>
 
-      <div class="section-title">Suoritushistoria</div>
-      <div class="card" style="margin-bottom:1.25rem">
+      <!-- Harjoitteet accordion -->
+      <button class="accordion-btn" onclick="toggleAccordion('acc-challenges')">
+        <span>Harjoitteet</span><span class="acc-count" id="acc-challenges-count"></span><span class="acc-arrow">▾</span>
+      </button>
+      <div class="accordion-body" id="acc-challenges">
+        <div id="coach-challenge-list" style="margin-bottom:10px"><div class="loading">Ladataan...</div></div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
+          <label class="form-label">Nimi</label>
+          <input type="text" id="new-title" placeholder="esim. Pomputtele 30 kertaa" />
+          <label class="form-label">Kuvaus</label>
+          <textarea id="new-desc" placeholder="Mitä tehdään..."></textarea>
+          <label class="form-label">Kategoria</label>
+          <select id="new-cat">
+            <option value="pomputtelu">Pomputtelu</option>
+            <option value="syotto">Syöttö</option>
+            <option value="pallonkasittely">Pallonkäsittely</option>
+            <option value="harhautukset">Harhautukset</option>
+            <option value="muu">Muu</option>
+          </select>
+          <label class="form-label">XP-pisteet</label>
+          <select id="new-xp">
+            <option value="5">5 XP – helppo</option>
+            <option value="10" selected>10 XP – normaali</option>
+            <option value="15">15 XP – vaativa</option>
+            <option value="20">20 XP – haaste</option>
+          </select>
+          <label class="form-label">YouTube-linkki (valinnainen)</label>
+          <input type="text" id="new-video" placeholder="https://youtube.com/..." />
+          <label class="form-label">Avautuu kun kategorian XP vähintään</label>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <input type="text" id="new-unlock" placeholder="0" style="width:70px;margin-bottom:0;text-align:center" />
+            <span style="font-size:12px;color:var(--text2)">XP (0 = heti auki)</span>
+          </div>
+          <button class="add-btn" onclick="addChallenge()">+ Lisää harjoite</button>
+        </div>
+      </div>
+
+      <!-- Historia accordion -->
+      <button class="accordion-btn" onclick="toggleAccordion('acc-history')">
+        <span>Suoritushistoria</span><span class="acc-count" id="acc-history-count"></span><span class="acc-arrow">▾</span>
+      </button>
+      <div class="accordion-body" id="acc-history">
         <div id="history-list"><div class="loading">Ladataan...</div></div>
-        <div style="margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px">
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
           <div id="clear-history-confirm" class="confirm-bar">
-            Tyhjennetäänkö koko suoritushistoria? <button class="confirm-yes" onclick="window.clearAllHistory()">Tyhjennä</button><button class="confirm-no" onclick="window.hideConfirm('clear-history-confirm')">Peruuta</button>
+            Tyhjennetäänkö historia? <button class="confirm-yes" onclick="window.clearAllHistory()">Tyhjennä</button><button class="confirm-no" onclick="window.hideConfirm('clear-history-confirm')">Peruuta</button>
           </div>
           <button class="del-btn" style="width:100%;text-align:center" onclick="window.showConfirm('clear-history-confirm')">Tyhjennä suoritushistoria</button>
         </div>
       </div>
 
-      <div class="section-title">Kauden vaihto</div>
-      <div class="card" style="border-color:#e0b0b0">
-        <div style="font-size:13px;color:#444;margin-bottom:10px">Arkistoi nykyisen kauden tulokset ja nollaa pelaajien suoritukset. Pelaajien nimet ja haasteet säilyvät.</div>
-        <label class="form-label">Kauden nimi (tallentuu arkistoon)</label>
-        <input type="text" id="season-name" placeholder="esim. Kausi 1 – toukokuu 2025" />
-        <div id="season-confirm" style="display:none;margin-top:4px">
-          <div style="font-size:13px;color:#A32D2D;margin-bottom:8px;font-weight:500">⚠️ Tämä nollaa kaikkien pelaajien XP:n ja suoritukset. Varmista että kauden nimi on oikein.</div>
-          <div style="display:flex;gap:8px">
-            <button class="confirm-yes" style="flex:1" onclick="window.doSeasonReset()">Kyllä, aloita uusi kausi</button>
-            <button class="confirm-no" style="flex:1" onclick="document.getElementById('season-confirm').style.display='none'">Peruuta</button>
+      <!-- Jakson nimi accordion -->
+      <button class="accordion-btn" onclick="toggleAccordion('acc-season')">
+        <span>Jakson nimi & kauden vaihto</span><span class="acc-count"></span><span class="acc-arrow">▾</span>
+      </button>
+      <div class="accordion-body" id="acc-season">
+        <label class="form-label">Jakson nimi (näkyy etusivulla)</label>
+        <input type="text" id="season-label-input" placeholder="esim. Toukokuu 2026" />
+        <button class="add-btn" style="margin-bottom:1rem" onclick="saveSeasonLabel()">Tallenna</button>
+
+        <div style="border-top:1px solid var(--border);padding-top:1rem">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Arkistoi kauden tulokset ja nollaa suoritukset. Nimet ja haasteet säilyvät.</div>
+          <label class="form-label">Kauden nimi</label>
+          <input type="text" id="season-name" placeholder="esim. Kausi 1 – toukokuu 2025" />
+          <div id="season-confirm" style="display:none;margin-bottom:8px">
+            <div style="font-size:12px;color:#c0001a;margin-bottom:8px;font-weight:600">⚠️ Nollaa kaikkien pelaajien XP:n ja suoritukset.</div>
+            <div style="display:flex;gap:8px">
+              <button class="confirm-yes" style="flex:1" onclick="window.doSeasonReset()">Kyllä, aloita uusi kausi</button>
+              <button class="confirm-no" style="flex:1" onclick="document.getElementById('season-confirm').style.display='none'">Peruuta</button>
+            </div>
           </div>
-        </div>
-        <button onclick="window.showSeasonConfirm()" class="add-btn" style="background:#A32D2D;margin-top:4px" id="season-btn">Aloita uusi kausi</button>
-        <div style="margin-top:1rem">
+          <button onclick="window.showSeasonConfirm()" class="add-btn" style="background:#c0001a;margin-bottom:1rem" id="season-btn">Aloita uusi kausi</button>
           <div class="section-title" style="margin-bottom:6px">Aiemmat kaudet</div>
-          <div id="season-archive"><div style="font-size:13px;color:#888">Ladataan...</div></div>
+          <div id="season-archive"><div style="font-size:13px;color:var(--text2)">Ladataan...</div></div>
         </div>
       </div>
     </div>
@@ -456,6 +478,14 @@ window.showTab = (t) => {
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['player','coach'][i]===t));
   document.getElementById('sec-player').classList.toggle('active', t==='player');
   document.getElementById('sec-coach').classList.toggle('active',  t==='coach');
+};
+
+window.toggleAccordion = (id) => {
+  const body = document.getElementById(id);
+  const btn = body.previousElementSibling;
+  const isOpen = body.style.display === 'block';
+  body.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('open', !isOpen);
 };
 
 async function loadPlayers() {
@@ -763,6 +793,10 @@ async function loadCoach() {
       <div class="stat-box"><div class="stat-label">Pelaajia</div><div class="stat-val">${players.length}</div></div>
       <div class="stat-box"><div class="stat-label">Suorituksia yht.</div><div class="stat-val">${total}</div></div>
       <div class="stat-box"><div class="stat-label">Harjoitteita</div><div class="stat-val">${challenges.length}</div></div>`;
+    const pc = document.getElementById('acc-players-count');
+    if(pc) pc.textContent = players.length;
+    const cc = document.getElementById('acc-challenges-count');
+    if(cc) cc.textContent = challenges.length;
     const pl=document.getElementById('coach-player-list'); pl.innerHTML='';
     if(!players.length){pl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei pelaajia vielä.</div>';}
     else {
@@ -846,6 +880,8 @@ async function loadHistory() {
       hSnap.docs.forEach(d=>all.push({playerName:p.name,...d.data()}));
     }
     all.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const hc = document.getElementById('acc-history-count');
+    if(hc) hc.textContent = all.length;
     if(!all.length){hl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei vielä suorituksia.</div>';return;}
     all.forEach(h=>{
       const row=document.createElement('div'); row.className='history-row';
