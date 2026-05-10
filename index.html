@@ -9,32 +9,193 @@
     :root {
       --red: #C8001A;
       --red-dark: #9A0014;
-      --red-dim: rgba(200,0,26,0.08);
-      --red-border: rgba(200,0,26,0.2);
-      --bg: #f4f4f4;
+      --red-dim: rgba(200,0,26,0.07);
+      --red-border: rgba(200,0,26,0.18);
+      --accent: #2563EB;
+      --accent-dim: rgba(37,99,235,0.08);
+      --accent-border: rgba(37,99,235,0.2);
+      --bg: #f0f2f5;
       --bg2: #ffffff;
-      --bg3: #f8f8f8;
-      --border: #e4e4e4;
-      --text: #111111;
-      --text2: #777777;
-      --blue: #1a6fc4;
-      --blue-dim: rgba(26,111,196,0.09);
-      --amber: #b06000;
-      --amber-dim: rgba(176,96,0,0.09);
-      --purple: #6a3fa0;
-      --purple-dim: rgba(106,63,160,0.09);
+      --bg3: #f7f8fa;
+      --border: #e2e5ea;
+      --text: #1a1d23;
+      --text2: #6b7280;
+      --blue: #2563EB;
+      --blue-dim: rgba(37,99,235,0.08);
+      --amber: #92620a;
+      --amber-dim: rgba(146,98,10,0.09);
+      --purple: #6d3fa0;
+      --purple-dim: rgba(109,63,160,0.09);
       --radius: 12px;
       --radius-sm: 8px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Barlow', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     .app { max-width: 520px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+
+    /* HEADER */
+    header { padding: 1.25rem 0 1rem; margin-bottom: 1.25rem; }
+    .header-inner { display: flex; align-items: center; gap: 12px; }
+    .header-icon { width: 40px; height: 40px; background: var(--red-dim); border: 1px solid var(--red-border); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: 0.01em; line-height: 1.1; }
+    header h1 span { color: var(--red); }
+    .season-tag { display: inline-block; font-size: 10px; font-weight: 600; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px; margin-top: 3px; letter-spacing: 0.04em; }
+    .header-divider { height: 1px; background: var(--border); margin-top: 1rem; }
+    .conn-status { display: none; }
+
+    /* TABS */
+    .tab-bar { display: flex; gap: 0; margin-bottom: 1.25rem; border-bottom: 1.5px solid var(--border); background: transparent; padding: 0; border-radius: 0; }
+    .tab { font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; padding: 8px 16px; border: none; background: transparent; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: all 0.15s; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab.coach-tab { font-size: 12px; font-weight: 500; color: #b0b8c4; }
+    .tab.coach-tab.active { color: var(--text2); border-bottom-color: var(--border); }
+    .section { display: none; } .section.active { display: block; }
+
+    /* CARDS */
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s; }
+    .card.done { border-left: 3px solid var(--red); background: #fff; }
+    .card.locked { opacity: 0.42; }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:hover { border-color: #c8cdd6; }
+
+    /* CATEGORY PILLS */
+    .cat-pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; display: inline-block; margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .cat-pomputtelu { background: #fee2e2; color: #991b1b; }
+    .cat-syotto { background: #dbeafe; color: #1e40af; }
+    .cat-pallonkasittely { background: #fef3c7; color: #78350f; }
+    .cat-harhautukset { background: #ede9fe; color: #4c1d95; }
+    .cat-muu { background: #f1f3f6; color: var(--text2); }
+
+    /* XP PILL */
+    .xp-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: #f1f3f6; color: var(--text2); border: 1px solid var(--border); white-space: nowrap; }
+    .xp-pill.locked { background: #f5f5f5; color: #c0c0c0; border-color: #e8e8e8; }
+
+    /* CHALLENGE TITLES */
+    .ch-title { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin: 2px 0; }
+    .ch-title.done { color: var(--text); }
+    .ch-desc { font-size: 13px; color: var(--text2); line-height: 1.4; }
+    .ch-desc.done { color: var(--text2); }
+    .vid-link { font-size: 12px; color: var(--blue); display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; text-decoration: none; }
+    .vid-link:hover { text-decoration: underline; }
+
+    /* BUTTONS */
+    .mark-btn { margin-top: 10px; width: 100%; padding: 9px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 700; background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; }
+    .mark-btn:hover { background: var(--red-dark); }
+    .add-btn { width: 100%; padding: 9px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-top: 4px; transition: background 0.15s; }
+    .add-btn:hover { background: #1d4ed8; }
+    .pw-btn { padding: 9px 24px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; }
+
+    /* XP BAR */
+    .xp-bar-bg { height: 5px; background: #e8eaed; border-radius: 6px; overflow: hidden; margin: 5px 0; }
+    .xp-bar-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.5s; }
+
+    /* STATS */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .stat-label { font-size: 10px; font-weight: 700; color: var(--text2); margin-bottom: 3px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 800; color: var(--text); }
+
+    /* PLAYER ROW */
+    .player-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .player-row:last-child { border-bottom: none; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 800; color: var(--accent); flex-shrink: 0; }
+    .level-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: #f1f3f6; color: var(--text2); border: 1px solid var(--border); white-space: nowrap; }
+
+    /* FILTER BAR */
+    .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .filter-btn { font-size: 11px; font-weight: 600; padding: 4px 11px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg2); cursor: pointer; color: var(--text2); transition: all 0.12s; }
+    .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .filter-btn:hover:not(.active) { border-color: #b0b8c4; color: var(--text); }
+
+    /* FORMS */
+    select, input[type=text], input[type=password], textarea {
+      width: 100%; margin-bottom: 8px; font-size: 13px; padding: 8px 10px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg2); color: var(--text); font-family: 'Barlow', sans-serif;
+      transition: border-color 0.15s;
+    }
+    select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent-border); box-shadow: 0 0 0 3px var(--accent-dim); }
+    textarea { height: 60px; resize: vertical; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 4px; display: block; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* SECTION TITLE */
+    .section-title { font-size: 10px; font-weight: 700; color: var(--text2); letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 8px; }
+
+    /* CHECK CIRCLE */
+    .check-circle { width: 20px; height: 20px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* HISTORY */
+    .history-row { font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--text2); display: flex; justify-content: space-between; gap: 8px; }
+    .history-row:last-child { border-bottom: none; }
+
+    /* TOAST */
+    .toast { background: #1a1d23; color: #fff; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; padding: 9px 20px; border-radius: 24px; text-align: center; position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.18); white-space: nowrap; }
+
+    /* MISC */
+    .loading { text-align: center; padding: 1.5rem; font-size: 13px; color: var(--text2); }
+    .err-box { background: #fff0f1; color: #c0001a; border: 1px solid #fcc; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
+    .ok-box { background: #f0faf4; color: #166534; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 10px; display: none; }
+    .pw-wrap { text-align: center; padding: 2.5rem 0; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+    /* DEL / CONFIRM */
+    .del-btn { font-size: 11px; font-weight: 600; padding: 3px 9px; border: 1px solid #e0b0b8; border-radius: 20px; background: #fff; color: #9f1239; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .del-btn:hover { background: #fff0f1; }
+    .confirm-bar { display: none; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px; color: #9f1239; flex-wrap: wrap; }
+    .confirm-yes { padding: 4px 12px; font-size: 12px; font-weight: 700; background: #9f1239; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .confirm-no  { padding: 4px 12px; font-size: 12px; font-weight: 500; background: #eee; color: #555; border: none; border-radius: 6px; cursor: pointer; }
+
+    /* LEVEL-UP */
+    .levelup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; backdrop-filter: blur(3px); }
+    .levelup-overlay.show { opacity: 1; pointer-events: auto; }
+    .levelup-box { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 2rem; text-align: center; transform: scale(0.88) translateY(16px); transition: transform 0.3s cubic-bezier(.34,1.5,.64,1); max-width: 290px; box-shadow: 0 16px 48px rgba(0,0,0,0.14); }
+    .levelup-overlay.show .levelup-box { transform: scale(1) translateY(0); }
+    .levelup-icon { font-size: 48px; margin-bottom: 8px; }
+    .levelup-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; color: var(--red); margin-bottom: 4px; }
+    .levelup-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; }
+    .levelup-btn { padding: 9px 26px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+
+    /* PROFILE MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: flex-end; justify-content: center; z-index: 998; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-box { background: #fff; border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 1.25rem; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(.4,0,.2,1); }
+    .modal-overlay.show .modal-box { transform: translateY(0); }
+    .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 1rem; }
+    .cat-stat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+    .cat-stat-label { font-size: 12px; color: var(--text2); width: 110px; flex-shrink: 0; }
+    .cat-stat-bar-bg { flex: 1; height: 5px; background: #e8eaed; border-radius: 6px; overflow: hidden; }
+    .cat-stat-bar-fill { height: 100%; border-radius: 6px; background: var(--accent); transition: width 0.5s; }
+    .cat-stat-pct { font-size: 11px; font-weight: 700; color: var(--text2); width: 30px; text-align: right; flex-shrink: 0; }
+
+    /* EDIT FORM */
+    .edit-form { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; display: none; }
+    .edit-btn { font-size: 11px; font-weight: 600; padding: 3px 9px; border: 1px solid var(--accent-border); border-radius: 20px; background: #fff; color: var(--accent); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .edit-btn:hover { background: var(--accent-dim); }
+    .save-btn { padding: 5px 14px; font-size: 12px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; margin-right: 6px; }
+    .cancel-btn { padding: 5px 12px; font-size: 12px; font-weight: 500; background: #eee; color: #555; border: none; border-radius: 6px; cursor: pointer; }
+
+    /* OVERVIEW BUTTON */
+    .overview-btn { width: 100%; padding: 9px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 500; background: #fff; color: var(--text2); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s; }
+    .overview-btn:hover { border-color: #b0b8c4; color: var(--text); }
+
+    /* VAIHDA / PROFIILI */
+    .vaihda-btn { font-size: 12px; font-weight: 500; padding: 4px 11px; border: 1px solid var(--border); border-radius: 20px; background: #fff; cursor: pointer; color: var(--text2); }
+    .vaihda-btn:hover { border-color: #b0b8c4; }
+    .profiili-btn { font-size: 12px; font-weight: 600; padding: 4px 11px; border: 1px solid var(--accent-border); border-radius: 20px; background: #fff; cursor: pointer; color: var(--accent); }
+    .profiili-btn:hover { background: var(--accent-dim); }
+
+    /* SEASON TAG */
+    .season-card-header { background: var(--bg3); padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
+
+    /* ACCORDION */
+    .accordion-btn { width:100%; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; transition:border-color 0.15s; }
+    .accordion-btn:hover { border-color:#b0b8c4; }
+    .accordion-btn.open { border-color:var(--accent-border); color:var(--accent); border-radius:var(--radius-sm) var(--radius-sm) 0 0; margin-bottom:0; }
+    .acc-count { font-size:11px; font-weight:600; color:var(--text2); background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:1px 8px; margin-left:auto; margin-right:8px; }
+    .acc-arrow { font-size:12px; color:var(--text2); transition:transform 0.2s; }
+    .accordion-btn.open .acc-arrow { transform:rotate(180deg); color:var(--accent); }
+    .accordion-body { display:none; background:var(--bg2); border:1px solid var(--accent-border); border-top:none; border-radius:0 0 var(--radius-sm) var(--radius-sm); padding:12px 14px; margin-bottom:8px; }
 
     /* HEADER */
     header { padding: 1.25rem 0 1rem; margin-bottom: 1.25rem; }
@@ -510,7 +671,7 @@ async function loadChallenges() {
 function renderPlayerSelect() {
   const dd = document.getElementById('player-dropdown');
   dd.innerHTML = '<option value="">– Valitse pelaaja –</option>';
-  players.forEach(p => {
+  [...players].sort((a,b)=>a.name.localeCompare(b.name,'fi')).forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.id;
     opt.textContent = p.name;
@@ -567,7 +728,7 @@ window.logOut = () => {
 };
 
 async function selectPlayer(id) {
-  currentPlayer=id; catFilter='kaikki';
+  currentPlayer=id; catFilter='pomputtelu';
   await loadChallenges();
   // Lataa pelaajan historia ja kaudet profiilia varten
   try {
@@ -597,7 +758,7 @@ function renderPlayerApp() {
   document.getElementById('p-xp-fill').style.width=pct+'%';
 
   const fb=document.getElementById('cat-filters'); fb.innerHTML='';
-  ['kaikki',...Object.keys(CATS)].forEach(k=>{
+  [...Object.keys(CATS),'kaikki'].forEach(k=>{
     const b=document.createElement('button');
     b.className='filter-btn'+(catFilter===k?' active':'');
     b.textContent=k==='kaikki'?'Kaikki':CATS[k].label;
@@ -798,16 +959,16 @@ async function loadCoach() {
     const cc = document.getElementById('acc-challenges-count');
     if(cc) cc.textContent = challenges.length;
     const pl=document.getElementById('coach-player-list'); pl.innerHTML='';
-    if(!players.length){pl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei pelaajia vielä.</div>';}
+    if(!players.length){pl.innerHTML='<div style="font-size:13px;color:var(--text2);padding:8px 0">Ei pelaajia vielä.</div>';}
     else {
-      [...players].sort((a,b)=>(b.xp||0)-(a.xp||0)).forEach(p=>{
+      [...players].sort((a,b)=>a.name.localeCompare(b.name,'fi')).forEach(p=>{
         const xp=p.xp||0, pct=Math.round(Math.min(xp,totalXP())/totalXP()*100);
         const row=document.createElement('div'); row.className='player-row';
         row.innerHTML=`
           <div class="avatar">${initials(p.name)}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:600;color:#1a1a1a">${p.name}</div>
-            <div style="font-size:12px;color:#888">${(p.done||[]).length} suoritusta · ${xp} XP</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text)">${p.name}</div>
+            <div style="font-size:12px;color:var(--text2)">${(p.done||[]).length} suoritusta · ${xp} XP</div>
             <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
             <div class="confirm-bar" id="confirm-p-${p.id}">
               Poistetaanko pelaaja? <button class="confirm-yes" onclick="window.deletePlayer('${p.id}')">Poista</button><button class="confirm-no" onclick="window.hideConfirm('confirm-p-${p.id}')">Peruuta</button>
@@ -821,48 +982,55 @@ async function loadCoach() {
       });
     }
 
-    // Harjoitelista muokkaus- ja poistopainikkeineen
+    // Harjoitelista kategorioittain
     const cl=document.getElementById('coach-challenge-list'); cl.innerHTML='';
-    if(!challenges.length){cl.innerHTML='<div style="font-size:13px;color:#888;padding:8px 0">Ei harjoitteita vielä.</div>';}
+    if(!challenges.length){cl.innerHTML='<div style="font-size:13px;color:var(--text2);padding:8px 0">Ei harjoitteita vielä.</div>';}
     else {
-      challenges.forEach(ch=>{
-        const cat=CATS[ch.cat]||CATS.muu;
-        const row=document.createElement('div');
-        row.style.cssText='padding:8px 0;border-bottom:1px solid #f0f0f0;';
-        const catOptions = Object.entries(CATS).map(([v,c])=>`<option value="${v}"${ch.cat===v?' selected':''}>${c.label}</option>`).join('');
-        const xpOptions = [5,10,15,20].map(v=>`<option value="${v}"${(ch.xp||10)===v?' selected':''}>${v} XP</option>`).join('');
-        row.innerHTML=`
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="flex:1;min-width:0">
-              <span class="cat-pill ${cat.cls}">${cat.label}</span>
-              <span style="font-size:13px;font-weight:500;color:#1a1a1a;margin-left:4px">${ch.title}</span>
-              <span style="font-size:11px;color:#888;margin-left:6px">+${ch.xp||10} XP · avautuu ${ch.unlockAt||0} XP</span>
+      Object.entries(CATS).forEach(([catKey, catInfo])=>{
+        const catChallenges = challenges.filter(c=>c.cat===catKey);
+        if(!catChallenges.length) return;
+        const header=document.createElement('div');
+        header.style.cssText='margin:10px 0 4px;';
+        header.innerHTML=`<span class="cat-pill ${catInfo.cls}">${catInfo.label}</span>`;
+        cl.appendChild(header);
+        catChallenges.forEach(ch=>{
+          const cat=CATS[ch.cat]||CATS.muu;
+          const row=document.createElement('div');
+          row.style.cssText='padding:6px 0;border-bottom:1px solid var(--border);';
+          const catOptions = Object.entries(CATS).map(([v,c])=>`<option value="${v}"${ch.cat===v?' selected':''}>${c.label}</option>`).join('');
+          const xpOptions = [5,10,15,20].map(v=>`<option value="${v}"${(ch.xp||10)===v?' selected':''}>${v} XP</option>`).join('');
+          row.innerHTML=`
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;min-width:0">
+                <span style="font-size:13px;font-weight:500;color:var(--text)">${ch.title}</span>
+                <span style="font-size:11px;color:var(--text2);margin-left:6px">+${ch.xp||10} XP · avautuu ${ch.unlockAt||0} XP</span>
+              </div>
+              <button class="edit-btn" onclick="window.toggleEdit('edit-${ch.id}')">Muokkaa</button>
+              <button class="del-btn" onclick="window.showConfirm('confirm-ch-${ch.id}')">Poista</button>
             </div>
-            <button class="edit-btn" onclick="window.toggleEdit('edit-${ch.id}')">Muokkaa</button>
-            <button class="del-btn" onclick="window.showConfirm('confirm-ch-${ch.id}')">Poista</button>
-          </div>
-          <div class="confirm-bar" id="confirm-ch-${ch.id}">
-            Poistetaanko harjoite? <button class="confirm-yes" onclick="window.deleteChallenge('${ch.id}')">Poista</button><button class="confirm-no" onclick="window.hideConfirm('confirm-ch-${ch.id}')">Peruuta</button>
-          </div>
-          <div class="edit-form" id="edit-${ch.id}">
-            <label class="form-label">Nimi</label>
-            <input type="text" id="edit-title-${ch.id}" value="${(ch.title||'').replace(/"/g,'&quot;')}" />
-            <label class="form-label">Kuvaus</label>
-            <textarea id="edit-desc-${ch.id}">${ch.desc||''}</textarea>
-            <label class="form-label">Kategoria</label>
-            <select id="edit-cat-${ch.id}">${catOptions}</select>
-            <label class="form-label">XP-pisteet</label>
-            <select id="edit-xp-${ch.id}">${xpOptions}</select>
-            <label class="form-label">YouTube-linkki</label>
-            <input type="text" id="edit-video-${ch.id}" value="${ch.video||''}" />
-            <label class="form-label">Avautuu kun kategoria-XP vähintään</label>
-            <input type="text" id="edit-unlock-${ch.id}" value="${ch.unlockAt||0}" style="width:80px" />
-            <div style="margin-top:8px">
-              <button class="save-btn" onclick="window.saveChallenge('${ch.id}')">Tallenna</button>
-              <button class="cancel-btn" onclick="window.toggleEdit('edit-${ch.id}')">Peruuta</button>
+            <div class="confirm-bar" id="confirm-ch-${ch.id}">
+              Poistetaanko harjoite? <button class="confirm-yes" onclick="window.deleteChallenge('${ch.id}')">Poista</button><button class="confirm-no" onclick="window.hideConfirm('confirm-ch-${ch.id}')">Peruuta</button>
             </div>
-          </div>`;
-        cl.appendChild(row);
+            <div class="edit-form" id="edit-${ch.id}">
+              <label class="form-label">Nimi</label>
+              <input type="text" id="edit-title-${ch.id}" value="${(ch.title||'').replace(/"/g,'&quot;')}" />
+              <label class="form-label">Kuvaus</label>
+              <textarea id="edit-desc-${ch.id}">${ch.desc||''}</textarea>
+              <label class="form-label">Kategoria</label>
+              <select id="edit-cat-${ch.id}">${catOptions}</select>
+              <label class="form-label">XP-pisteet</label>
+              <select id="edit-xp-${ch.id}">${xpOptions}</select>
+              <label class="form-label">YouTube-linkki</label>
+              <input type="text" id="edit-video-${ch.id}" value="${ch.video||''}" />
+              <label class="form-label">Avautuu kun kategoria-XP vähintään</label>
+              <input type="text" id="edit-unlock-${ch.id}" value="${ch.unlockAt||0}" style="width:80px" />
+              <div style="margin-top:8px">
+                <button class="save-btn" onclick="window.saveChallenge('${ch.id}')">Tallenna</button>
+                <button class="cancel-btn" onclick="window.toggleEdit('edit-${ch.id}')">Peruuta</button>
+              </div>
+            </div>`;
+          cl.appendChild(row);
+        });
       });
     }
     await loadHistory();
