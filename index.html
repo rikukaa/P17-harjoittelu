@@ -1171,21 +1171,38 @@ window.doSeasonReset = async () => {
   try {
     const date = new Date().toISOString().split('T')[0];
     const snapTotalXP = totalXP();
-    // Arkistoi jokaisen pelaajan XP ja nollaa
-    for (const p of players) {
-      await addDoc(collection(db,'players',p.id,'kaudet'), {
-        nimi: name, xp: p.xp||0, suorituksia: (p.done||[]).length, date, totalXP: snapTotalXP, ts: serverTimestamp()
-      });
-      // Poista historia
-      const hSnap = await getDocs(collection(db,'players',p.id,'history'));
-      await Promise.all(hSnap.docs.map(d=>deleteDoc(d.ref)));
-      // Nollaa XP ja suoritukset
-      await updateDoc(doc(db,'players',p.id), { xp:0, done:[] });
+
+    // Hae tuoreet pelaajat suoraan Firebasesta duplikaattien välttämiseksi
+    const freshSnap = await getDocs(collection(db,'players'));
+    const freshPlayers = freshSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    let virheet = [];
+    for (const p of freshPlayers) {
+      try {
+        // Arkistoi
+        await addDoc(collection(db,'players',p.id,'kaudet'), {
+          nimi: name, xp: p.xp||0, suorituksia: (p.done||[]).length,
+          date, totalXP: snapTotalXP, ts: serverTimestamp()
+        });
+        // Poista historia
+        const hSnap = await getDocs(collection(db,'players',p.id,'history'));
+        await Promise.all(hSnap.docs.map(d=>deleteDoc(d.ref)));
+        // Nollaa
+        await updateDoc(doc(db,'players',p.id), { xp:0, done:[] });
+      } catch(e) {
+        virheet.push(p.name);
+      }
     }
+
     document.getElementById('season-name').value = '';
     document.getElementById('season-confirm').style.display = 'none';
     document.getElementById('season-btn').style.display = 'block';
-    showOk('ok-coach', '✓ Kausi "'+name+'" arkistoitu ja suoritukset nollattu!');
+
+    if (virheet.length) {
+      showErr('err-coach', '⚠️ Nollaus epäonnistui pelaajille: ' + virheet.join(', ') + '. Yritä uudelleen.');
+    } else {
+      showOk('ok-coach', '✓ Kausi "'+name+'" arkistoitu ja kaikki suoritukset nollattu!');
+    }
     await loadCoach();
   } catch(e){ showErr('err-coach','Kauden vaihto epäonnistui: '+e.message); }
 };
