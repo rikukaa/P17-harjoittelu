@@ -566,6 +566,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCX8Olqf0fszDCeVAgrBifVsjRwBFR4sFE",
@@ -578,6 +579,13 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
+
+try {
+  await signInAnonymously(auth);
+} catch(e) {
+  console.error('Auth epäonnistui:', e.message);
+}
 
 const COACH_PW = '0506';
 const CATS = {
